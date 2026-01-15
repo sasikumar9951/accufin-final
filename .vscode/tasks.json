@@ -1,0 +1,24 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Add cron job for birthday wishes",
+			"type": "shell",
+			"command": "schtasks",
+			"args": [
+				"/Create",
+				"/SC",
+				"DAILY",
+				"/TN",
+				"SendBirthdayWishes",
+				"/TR",
+				"powershell.exe -ExecutionPolicy Bypass -File C:\\Users\\Dell\\OneDrive\\Desktop\\accufin\\scripts\\send-birthday-wishes.ps1",
+				"/ST",
+				"00:00"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

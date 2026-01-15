@@ -1,0 +1,394 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   @default("")
+  name      String?
+  sinNumber String?
+  businessNumber String?
+  dateOfBirth DateTime?
+  isAdmin   Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  isOnline  Boolean  @default(false)
+  lastActivityAt DateTime?
+  provider  String? @default("credentials")
+  contactNumber String?
+  profileUrl String?
+  address   String? 
+  occupation String?
+
+  //delete user
+  isRestorable Boolean @default(false)
+  deleteUserAt DateTime?
+
+  //Data Limit 
+  storageUsed Int @default(0) // in KB 
+  maxStorageLimit Int @default(1048576) // in KB (1 GB)  
+  // MFA Settings
+  mfaEnabled Boolean @default(false)
+  preferredMfaMethod String? // "email", "sms", "authenticator"
+  totpSecret String? // Encrypted TOTP secret for authenticator apps
+  totpEnabled Boolean @default(false)
+  smsEnabled Boolean @default(false)
+  emailMfaEnabled Boolean @default(true) // Default to email MFA
+  
+  // Birthday Email Settings
+  sendBirthdayEmail Boolean? @default(true) // Default to sending birthday emails
+  
+  uploadedFiles File[] @relation("UserUploadedFiles")
+  receivedFiles File[] @relation("UserReceivedFiles")
+
+  notifications Notification[] @relation("UserNotifications")
+  formResponses FormResponse[] @relation("UserFormResponses")
+  assignedForms Forms[] @relation("FormAssignedUsers")
+  passwordResetTokens PasswordResetToken[] @relation("UserPasswordResetTokens")
+  otpTokens OtpToken[] @relation("UserOtpTokens")
+  mfaBackupCodes MfaBackupCode[] @relation("UserMfaBackupCodes")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model File {
+  id        String   @id @default(uuid())
+
+  url String?
+  path String?
+  name String?
+  size String?
+  type String?
+  isArchived Boolean @default(false)
+
+  folderName String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  parentFolder File? @relation("FileParentChild", fields: [parentFolderId], references: [id])
+  parentFolderId String?
+  childFiles File[] @relation("FileParentChild")
+
+  uploadedBy User? @relation("UserUploadedFiles", fields: [uploadedById], references: [id])
+  uploadedById String?
+  receivedBy User? @relation("UserReceivedFiles", fields: [receivedById], references: [id])
+  receivedById String?
+
+  isAdminOnlyPrivateFile Boolean @default(false)
+
+  @@index([uploadedById]) 
+  @@index([receivedById])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  title String
+  message String
+  isRead Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation("UserNotifications", fields: [userId], references: [id])
+  userId String
+}
+
+model Blogs  {
+  id        String   @id @default(uuid())
+  title String
+  content String
+  tags String[]
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Forms { 
+  id String @id @default(uuid())
+  title String
+  description String?
+  isActive Boolean @default(false)
+  privacyLabel String @default("I consent to the processing of my personal data and agree to the privacy policy")
+  isCompulsory Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sequence String[]
+
+  fieldsCount Int @default(0)
+  responsesCount Int @default(0)
+  assignedUsersCount Int @default(0)
+
+  inputs Input[] @relation("FormInputs")
+  selections Selection[] @relation("FormSelections")
+  multipleChoice MultipleChoice[] @relation("FormMultipleChoices")
+  ratings Rating[] @relation("FormRatings")
+  matrices Matrix[] @relation("FormMatrices")
+  netPromoterScores NetPromoterScore[] @relation("FormNetPromoterScores")
+  separators Separator[] @relation("FormSeparators")
+
+  formResponses FormResponse[] @relation("FormFormResponses")
+  assignedUsers User[] @relation("FormAssignedUsers")
+}
+
+model FormResponse {
+  id        String   @id @default(uuid())
+  isChecked Boolean @default(false)
+  
+  user      User     @relation("UserFormResponses", fields: [userId], references: [id])
+  userId    String
+  
+  form      Forms    @relation("FormFormResponses", fields: [formId], references: [id])
+  formId    String
+
+  answers   FormAnswer[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FormAnswer {
+  id            String   @id @default(uuid())
+
+  formResponse  FormResponse @relation(fields: [formResponseId], references: [id])
+  formResponseId String
+
+  fieldId       String   
+  fieldType     String 
+  value         String   
+  // For matrix answers, we'll store row and column identifiers
+  rowId         String?
+  columnId      String?
+
+  createdAt DateTime @default(now())
+}
+
+model Input { 
+  id String @id @default(uuid())
+  label String?
+  required Boolean @default(false)
+  type String? // "text", "email", "number", "date", etc.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form Forms @relation("FormInputs", fields: [formId], references: [id])
+  formId String
+}
+
+model Selection {
+  id String @id @default(uuid())
+  label String?
+  required Boolean @default(false)
+
+  options String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form Forms @relation("FormSelections", fields: [formId], references: [id])
+  formId String
+}
+
+model MultipleChoice {
+  id String @id @default(uuid())
+  label String?
+  required Boolean @default(false)
+  maxChoices Int?
+
+  options String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form Forms @relation("FormMultipleChoices", fields: [formId], references: [id])
+  formId String
+
+  @@index([formId])
+}
+
+model Rating {
+  id String @id @default(uuid())
+  question String
+  required Boolean @default(false)
+  maxRating Int @default(5) // Maximum rating value (default 5 for 5 stars, but can be any number)
+  showLabels Boolean @default(false) // Whether to show labels like "Poor", "Excellent"
+  labels String[] // Optional labels for each star (e.g., ["Poor", "Fair", "Good", "Very Good", "Excellent"])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form Forms @relation("FormRatings", fields: [formId], references: [id])
+  formId String
+
+  @@index([formId])
+}
+
+model Matrix {
+  id String @id @default(uuid())
+  title String
+  description String?
+  required Boolean @default(false)
+  
+  // Store rows and columns as JSON arrays
+  rows String[] // Array of row labels/identifiers
+  columns String[] // Array of column labels/identifiers
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form Forms @relation("FormMatrices", fields: [formId], references: [id])
+  formId String
+
+  @@index([formId])
+}
+
+model NetPromoterScore {
+  id String @id @default(uuid())
+  question String
+  leftLabel String @default("Not at all likely")
+  rightLabel String @default("Extremely likely")
+  required Boolean @default(false)
+  maxScore Int @default(10) // Scale from 0 to 10
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form Forms @relation("FormNetPromoterScores", fields: [formId], references: [id])
+  formId String
+
+  @@index([formId])
+}
+
+model Separator {
+  id String @id @default(uuid())
+  title String
+  description String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form Forms @relation("FormSeparators", fields: [formId], references: [id])
+  formId String
+
+  @@index([formId])
+}
+
+model OpenContact { 
+  id String @id @default(uuid())
+  address String?
+  phone1 String?
+  phone2 String?
+  email String?
+  links Link[] @relation("OpenContactLinks")
+  importantDates ImportantDate[] @relation("OpenContactImportantDates")
+}
+
+model Link { 
+  id String @id @default(uuid())
+  name String
+  url String
+  openContact OpenContact @relation("OpenContactLinks", fields: [openContactId], references: [id], onDelete: Cascade)
+  openContactId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ImportantDate {
+  id String @id @default(uuid())
+  title String
+  description String?
+  date DateTime
+  openContact OpenContact @relation("OpenContactImportantDates", fields: [openContactId], references: [id], onDelete: Cascade)
+  openContactId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Testimonial {
+  id        String   @id @default(uuid())
+  name      String
+  role      String
+  text      String
+  imagePath String?
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  
+  user      User     @relation("UserPasswordResetTokens", fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([token])
+  @@index([userId])
+}
+
+model OtpToken {
+  id        String   @id @default(uuid())
+  hashedOtp String   
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  purpose   String   // "login" or "signup"
+  email     String?  // Store email for signup cases where user doesn't exist yet
+  
+  user      User?    @relation("UserOtpTokens", fields: [userId], references: [id], onDelete: Cascade)
+  userId    String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([hashedOtp])
+  @@index([email])
+}
+
+model MfaBackupCode {
+  id        String   @id @default(uuid())
+  hashedCode String  @unique // Hashed backup code
+  used      Boolean  @default(false)
+  usedAt    DateTime?
+  
+  user      User     @relation("UserMfaBackupCodes", fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([hashedCode])
+}
+
+model RateLimit {
+  id        String   @id @default(uuid())
+  identifier String  // email 
+  action    String   // "send_otp", "verify_otp", "login", etc.
+  
+  createdAt DateTime @default(now())
+  
+  @@index([identifier, action, createdAt])
+}
