@@ -4,7 +4,7 @@ import { deleteFolderFromS3, deleteMultipleFilesFromS3, s3 } from "@/lib/s3";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const secret = request.headers.get("x-admin-secret");
@@ -23,7 +23,7 @@ export async function DELETE(
     if (!user.isRestorable || !user.deleteUserAt) {
       return NextResponse.json(
         { error: "User is not scheduled for permanent deletion" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,7 +34,9 @@ export async function DELETE(
       },
       select: { path: true },
     });
-    const filePaths = userFiles.map((f: any) => f.path).filter(Boolean) as string[];
+    const filePaths = userFiles
+      .map((f: any) => f.path)
+      .filter(Boolean) as string[];
 
     // Collect form response ids to delete answers first
     const formResponses = await prisma.formResponse.findMany({
@@ -92,7 +94,7 @@ export async function DELETE(
     console.error("Admin delete user error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

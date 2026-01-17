@@ -68,7 +68,7 @@ const getUserRowClassName = (user: any, onlineUsers: Set<string>): string => {
 
 const getAvatarRingClassName = (
   user: any,
-  onlineUsers: Set<string>
+  onlineUsers: Set<string>,
 ): string => {
   if (!user.isActive) {
     return "ring-red-300";
@@ -84,7 +84,7 @@ const getAvatarRingClassName = (
 
 const getStatusBadgeClassName = (
   user: any,
-  onlineUsers: Set<string>
+  onlineUsers: Set<string>,
 ): string => {
   if (!user.isActive) {
     return "text-white bg-red-500";
@@ -114,12 +114,12 @@ const handleUserRestore = async (
   restorableUsers: any[],
   setUserToRestore: (user: any) => void,
   setRestoreConfirmationText: (text: string) => void,
-  setShowRestoreConfirmation: (show: boolean) => void
+  setShowRestoreConfirmation: (show: boolean) => void,
 ) => {
   setUserToRestore(
     restorableUsers
       .filter((u) => u.id === userId)
-      .map((u) => ({ id: u.id, name: u.name, email: u.email }))[0] || null
+      .map((u) => ({ id: u.id, name: u.name, email: u.email }))[0] || null,
   );
   setRestoreConfirmationText("");
   setShowRestoreConfirmation(true);
@@ -131,7 +131,7 @@ const handleUserAdminToggle = (
   currentIsAdmin: boolean,
   users: any[],
   setSelectedUser: (user: any) => void,
-  setShowAdminModal: (show: boolean) => void
+  setShowAdminModal: (show: boolean) => void,
 ) => {
   const user = users.find((u) => u.id === userId);
   if (!user) return;
@@ -150,7 +150,7 @@ const handleUserActiveToggle = (
   currentIsActive: boolean,
   users: any[],
   setUserToToggleActive: (user: any) => void,
-  setShowActiveToggleConfirmation: (show: boolean) => void
+  setShowActiveToggleConfirmation: (show: boolean) => void,
 ) => {
   const user = users.find((u) => u.id === userId);
   if (!user) return;
@@ -205,7 +205,7 @@ const calculateStoragePercent = (usedKb: StorageValue, maxKb: StorageValue) => {
 // Helper function to update online status
 const updateOnlineStatus = async (
   markOfflineUsers: () => Promise<void>,
-  fetchOnlineUsers: () => Promise<void>
+  fetchOnlineUsers: () => Promise<void>,
 ) => {
   await markOfflineUsers();
   await fetchOnlineUsers();
@@ -249,14 +249,14 @@ const performActiveToggle = async (
   userToToggleActive: any,
   setUsersList: any,
   router: any,
-  toast: any
+  toast: any,
 ) => {
   setUsersList((prev: any) =>
     prev.map((u: any) =>
       u.id === userToToggleActive.id
         ? { ...u, isActive: !userToToggleActive.currentStatus }
-        : u
-    )
+        : u,
+    ),
   );
 
   try {
@@ -278,7 +278,8 @@ const performActiveToggle = async (
       }
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to update active status");
+      if (!response.ok)
+        throw new Error(data.error || "Failed to update active status");
 
       toast.success(data.message);
       router.refresh();
@@ -287,21 +288,23 @@ const performActiveToggle = async (
         prev.map((u: any) =>
           u.id === userToToggleActive.id
             ? { ...u, isActive: userToToggleActive.currentStatus }
-            : u
-        )
+            : u,
+        ),
       );
-      toast.error(e instanceof Error ? e.message : "Failed to update active status");
+      toast.error(
+        e instanceof Error ? e.message : "Failed to update active status",
+      );
     }
   } catch (e) {
     setUsersList((prev: any) =>
       prev.map((u: any) =>
         u.id === userToToggleActive.id
           ? { ...u, isActive: userToToggleActive.currentStatus }
-          : u
-      )
+          : u,
+      ),
     );
     toast.error(
-      e instanceof Error ? e.message : "Failed to update active status"
+      e instanceof Error ? e.message : "Failed to update active status",
     );
   }
 };
@@ -311,7 +314,7 @@ const performAdminToggle = async (
   selectedUser: any,
   setUsersList: any,
   router: any,
-  toast: any
+  toast: any,
 ) => {
   try {
     try {
@@ -341,19 +344,25 @@ const performAdminToggle = async (
 
       setUsersList((prev: any) =>
         prev.map((u: any) =>
-          u.id === selectedUser.id ? { ...u, isAdmin: !selectedUser.isAdmin } : u
-        )
+          u.id === selectedUser.id
+            ? { ...u, isAdmin: !selectedUser.isAdmin }
+            : u,
+        ),
       );
 
       router.refresh();
     } catch (error) {
       console.error("Error toggling admin status:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to update admin status");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update admin status",
+      );
     }
   } catch (error) {
     console.error("Error toggling admin status:", error);
     toast.error(
-      error instanceof Error ? error.message : "Failed to update admin status"
+      error instanceof Error ? error.message : "Failed to update admin status",
     );
   }
 };
@@ -363,7 +372,7 @@ const copyToClipboard = async (
   text: string,
   successMessage: string,
   errorMessage: string,
-  toast: any
+  toast: any,
 ) => {
   try {
     await navigator.clipboard.writeText(text);
@@ -394,7 +403,7 @@ const formatDateForInput = (date: DateValue): string => {
 // Helper function to render storage progress bar
 const renderStorageProgressBar = (
   percent: number,
-  getProgressBarColor: (p: number) => string
+  getProgressBarColor: (p: number) => string,
 ) => {
   const barColor = percent >= 100 ? "bg-red-500" : getProgressBarColor(percent);
   return (
@@ -414,7 +423,7 @@ const getUserRowClassNameWithStorage = (
   user: any,
   onlineUsers: Set<string>,
   storageUsed: number,
-  maxStorageLimit: number
+  maxStorageLimit: number,
 ): string => {
   const percent = calculateStoragePercent(storageUsed, maxStorageLimit);
   if (percent >= 100) {
@@ -428,7 +437,7 @@ const getAvatarRingClassNameWithStorage = (
   user: any,
   onlineUsers: Set<string>,
   storageUsed: number,
-  maxStorageLimit: number
+  maxStorageLimit: number,
 ): string => {
   const percent = calculateStoragePercent(storageUsed, maxStorageLimit);
   if (percent >= 100) {
@@ -442,7 +451,7 @@ const getStatusBadgeClassNameWithStorage = (
   user: any,
   onlineUsers: Set<string>,
   storageUsed: number,
-  maxStorageLimit: number
+  maxStorageLimit: number,
 ): string => {
   const percent = calculateStoragePercent(storageUsed, maxStorageLimit);
   if (percent >= 100) {
@@ -474,7 +483,7 @@ const renderRestorableUsersRows = (
   restorablePaginatedUsers: any[],
   restoringUserId: string | null,
   handleRestoreUser: (userId: string) => void,
-  formatTimeLeft: (deleteAt: DateValue) => string
+  formatTimeLeft: (deleteAt: DateValue) => string,
 ) => {
   if (restorableUsers.length === 0) {
     return (
@@ -583,11 +592,13 @@ const markOfflineUsers = async (router: any) => {
 
 // Helper function to fetch online users
 const fetchOnlineUsersData = async (
-  setOnlineUsers: (users: Set<string>) => void
+  setOnlineUsers: (users: Set<string>) => void,
 ) => {
   try {
     try {
-      const response = await apiFetch("/api/admin/online-users", { logoutOn401: false });
+      const response = await apiFetch("/api/admin/online-users", {
+        logoutOn401: false,
+      });
       if (response.status === 401) {
         const { signOut } = await import("next-auth/react");
         signOut();
@@ -596,7 +607,7 @@ const fetchOnlineUsersData = async (
       if (response.ok) {
         const data = await response.json();
         const onlineUserIds = new Set(
-          data.data.onlineUsersList.map((user: any) => user.id)
+          data.data.onlineUsersList.map((user: any) => user.id),
         );
         setOnlineUsers(onlineUserIds as Set<string>);
       }
@@ -737,7 +748,9 @@ export default function UserManagement(_props: UserManagementProps) {
     setError(null);
     setLoading(true);
     try {
-      const res = await apiFetch("/api/admin/get-users", { logoutOn401: false });
+      const res = await apiFetch("/api/admin/get-users", {
+        logoutOn401: false,
+      });
       if (res.status === 401) {
         const { signOut } = await import("next-auth/react");
         signOut();
@@ -762,7 +775,9 @@ export default function UserManagement(_props: UserManagementProps) {
     setRestorableError(null);
     setRestorableLoading(true);
     try {
-      const res = await apiFetch("/api/admin/users/restorable", { logoutOn401: false });
+      const res = await apiFetch("/api/admin/users/restorable", {
+        logoutOn401: false,
+      });
       if (res.status === 401) {
         const { signOut } = await import("next-auth/react");
         signOut();
@@ -773,7 +788,7 @@ export default function UserManagement(_props: UserManagementProps) {
       setRestorableUsers(data.users || []);
     } catch (err) {
       setRestorableError(
-        err instanceof Error ? err.message : "Failed to load restorable users"
+        err instanceof Error ? err.message : "Failed to load restorable users",
       );
     } finally {
       setRestorableLoading(false);
@@ -794,7 +809,7 @@ export default function UserManagement(_props: UserManagementProps) {
 
   const calcStoragePercent = (
     usedKb: number | null | undefined,
-    maxKb: number | null | undefined
+    maxKb: number | null | undefined,
   ) => {
     return calculateStoragePercent(usedKb, maxKb);
   };
@@ -820,7 +835,7 @@ export default function UserManagement(_props: UserManagementProps) {
       restorableUsers,
       setUserToRestore,
       setRestoreConfirmationText,
-      setShowRestoreConfirmation
+      setShowRestoreConfirmation,
     );
   };
 
@@ -831,7 +846,7 @@ export default function UserManagement(_props: UserManagementProps) {
   }, [restorableUsers, restorableCurrentPage]);
 
   const restorableTotalPages = Math.ceil(
-    restorableUsers.length / restorableItemsPerPage
+    restorableUsers.length / restorableItemsPerPage,
   );
 
   // Small helper to create a page range
@@ -868,7 +883,7 @@ export default function UserManagement(_props: UserManagementProps) {
       return s;
     };
     const lines = [headers.join(",")].concat(
-      rows.map((r) => headers.map((h) => escape(r[h])).join(","))
+      rows.map((r) => headers.map((h) => escape(r[h])).join(",")),
     );
     return lines.join("\n");
   };
@@ -950,14 +965,14 @@ export default function UserManagement(_props: UserManagementProps) {
 
     const tableRows = rows
       .map((r) =>
-        headers.map((h) => String((r as Record<string, any>)[h] ?? ""))
+        headers.map((h) => String((r as Record<string, any>)[h] ?? "")),
       )
       .map((cells) => createTableRow(cells))
       .join("");
     const headerHtml = headers
       .map(
         (h) =>
-          `<th style="border:1px solid #ddd;padding:6px;text-align:left;background:#f3f4f6;font-size:11px;">${h}</th>`
+          `<th style="border:1px solid #ddd;padding:6px;text-align:left;background:#f3f4f6;font-size:11px;">${h}</th>`,
       )
       .join("");
 
@@ -1032,7 +1047,7 @@ export default function UserManagement(_props: UserManagementProps) {
           user.occupation?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           user.contactNumber?.includes(searchQuery) ||
           user.sinNumber?.includes(searchQuery) ||
-          user.businessNumber?.includes(searchQuery)
+          user.businessNumber?.includes(searchQuery),
       );
     }
 
@@ -1090,20 +1105,20 @@ export default function UserManagement(_props: UserManagementProps) {
       currentIsAdmin,
       users,
       setSelectedUser,
-      setShowAdminModal
+      setShowAdminModal,
     );
   };
 
   const handleActiveToggle = async (
     userId: string,
-    currentIsActive: boolean
+    currentIsActive: boolean,
   ) => {
     handleUserActiveToggle(
       userId,
       currentIsActive,
       users,
       setUserToToggleActive,
-      setShowActiveToggleConfirmation
+      setShowActiveToggleConfirmation,
     );
   };
 
@@ -1639,7 +1654,7 @@ export default function UserManagement(_props: UserManagementProps) {
                             restorablePaginatedUsers,
                             restoringUserId,
                             handleRestoreUser,
-                            formatTimeLeft
+                            formatTimeLeft,
                           )
                         )}
                       </tbody>
@@ -1658,7 +1673,7 @@ export default function UserManagement(_props: UserManagementProps) {
               to{" "}
               {Math.min(
                 restorableCurrentPage * restorableItemsPerPage,
-                restorableUsers.length
+                restorableUsers.length,
               )}{" "}
               of {restorableUsers.length} results
             </div>

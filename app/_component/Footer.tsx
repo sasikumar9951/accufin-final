@@ -32,7 +32,7 @@ type OpenContactWithLinks = OpenContact & {
 };
 export default function Footer() {
   const [openContact, setOpenContact] = useState<OpenContactWithLinks | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -62,14 +62,15 @@ export default function Footer() {
             </div>
           </div>
           <p className="mb-6 mt-4 text-white/90">
-            Every client is very important, and we invest our time in synergies and efforts for your businesses as equal as yours. 
+            Every client is very important, and we invest our time in synergies
+            and efforts for your businesses as equal as yours.
           </p>
           <div className="flex space-x-4 mt-6 flex-col">
             {openContact.links?.map((link) => (
-                <a href={link.url} className="mb-2" key={link.id}>
-                  {link.name}
-                </a>
-              ))}
+              <a href={link.url} className="mb-2" key={link.id}>
+                {link.name}
+              </a>
+            ))}
           </div>
         </div>
         {/* Quick Links */}
@@ -94,7 +95,6 @@ export default function Footer() {
               );
             })}
           </ul>
-
         </div>
         {/* Services */}
         <div className="flex-1 min-w-[200px]">

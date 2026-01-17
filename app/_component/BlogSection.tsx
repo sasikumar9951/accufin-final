@@ -8,8 +8,7 @@ import { formatTextWithLinks } from "@/lib/utils";
 export default function BlogSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.3 });
-  
-  
+
   const [blogs, setBlogs] = useState<Blogs[]>([]);
 
   useEffect(() => {
@@ -39,9 +38,6 @@ export default function BlogSection() {
           Stop Guessing. Start Growing, Lets work together to make bookkeeping and accounting streamlined and hassle free.
         </p> */}
 
-
-      
-
         <section className="bg-[#f7f9fa] py-16 px-4" ref={ref}>
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -60,39 +56,43 @@ export default function BlogSection() {
               Important information might be useful for you
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {blogs && blogs.length > 0 && blogs.map((blog) => (
-                <div
-                  key={blog.id}
-                  className="rounded-lg overflow-hidden border border-[#008db3] bg-white flex flex-col h-full group transition-colors duration-300 hover:bg-[#008db3] hover:text-white"
-                >
-                  <div className="overflow-hidden">
-                    <img
-                      src={"/img9.jpg"}
-                      alt={blog.title}
-                      className="w-full h-56 object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="flex-1 flex flex-col p-6 bg-[#008db3] group-hover:bg-[#008db3] transition-colors text-white">
-                    <div className="font-bold text-lg mb-2">{blog.title}</div>
-                    <div className="flex items-center text-sm mb-2 opacity-80 group-hover:opacity-100">
-                      <FaCalendarAlt className="mr-2" />
-                      {blog.createdAt ? new Date(blog.createdAt).toLocaleDateString() : "N/A"}
-
+              {blogs &&
+                blogs.length > 0 &&
+                blogs.map((blog) => (
+                  <div
+                    key={blog.id}
+                    className="rounded-lg overflow-hidden border border-[#008db3] bg-white flex flex-col h-full group transition-colors duration-300 hover:bg-[#008db3] hover:text-white"
+                  >
+                    <div className="overflow-hidden">
+                      <img
+                        src={"/img9.jpg"}
+                        alt={blog.title}
+                        className="w-full h-56 object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+                      />
                     </div>
-                    <div className="mb-4 text-sm flex-1">{formatTextWithLinks(blog.content, "white")}</div>
-                    <a
-                      href={`/blog/${blog.id}`}
-                      className="inline-flex items-center font-semibold text-sm mt-auto text-white group-hover:text-white transition-colors"
-                    >
-                      READ MORE <FaChevronRight className="ml-2" />
-                    </a>
+                    <div className="flex-1 flex flex-col p-6 bg-[#008db3] group-hover:bg-[#008db3] transition-colors text-white">
+                      <div className="font-bold text-lg mb-2">{blog.title}</div>
+                      <div className="flex items-center text-sm mb-2 opacity-80 group-hover:opacity-100">
+                        <FaCalendarAlt className="mr-2" />
+                        {blog.createdAt
+                          ? new Date(blog.createdAt).toLocaleDateString()
+                          : "N/A"}
+                      </div>
+                      <div className="mb-4 text-sm flex-1">
+                        {formatTextWithLinks(blog.content, "white")}
+                      </div>
+                      <a
+                        href={`/blog/${blog.id}`}
+                        className="inline-flex items-center font-semibold text-sm mt-auto text-white group-hover:text-white transition-colors"
+                      >
+                        READ MORE <FaChevronRight className="ml-2" />
+                      </a>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </motion.div>
         </section>
-
       </motion.div>
     </section>
   );
