@@ -30,7 +30,7 @@ export async function GET() {
     const usersWithActivityInfo = users.map((user: any) => {
       const timeSinceLastActivity = user.lastActivityAt
         ? Math.floor(
-            (now.getTime() - user.lastActivityAt.getTime()) / 1000 / 60
+            (now.getTime() - user.lastActivityAt.getTime()) / 1000 / 60,
           ) // minutes
         : null;
 
@@ -40,14 +40,14 @@ export async function GET() {
         isRecentlyActive:
           timeSinceLastActivity !== null && timeSinceLastActivity <= 2, // Active within last 2 minutes
       };
-    });
+    }) as Array<any>;
 
     // Separate online and offline users
     const onlineUsers = usersWithActivityInfo.filter(
-      (user: any) => user.isOnline && user.isRecentlyActive
+      (user: any) => user.isOnline && user.isRecentlyActive,
     );
     const offlineUsers = usersWithActivityInfo.filter(
-      (user: any) => !user.isOnline || !user.isRecentlyActive
+      (user: any) => !user.isOnline || !user.isRecentlyActive,
     );
 
     return NextResponse.json({
