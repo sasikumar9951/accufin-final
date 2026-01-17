@@ -162,7 +162,7 @@ export const authOptions: AuthOptions = {
 
         const user = await validateUserCredentials(
           credentials.email,
-          credentials.password
+          credentials.password,
         );
 
         // If backup code was already verified by API, allow login and skip all MFA
@@ -236,7 +236,7 @@ export const authOptions: AuthOptions = {
           } catch (emailError) {
             console.error(
               "Error sending login confirmation email:",
-              emailError
+              emailError,
             );
             // Don't fail login if email fails
           }
