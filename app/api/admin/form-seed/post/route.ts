@@ -186,14 +186,14 @@ export async function POST() {
     // Read all JSON files from the export directory
     const files = fs
       .readdirSync(exportDir)
-      .filter((file) => file.endsWith(".json"));
+      .filter((file: any) => file.endsWith(".json"));
 
     if (files.length === 0) {
       return error("No JSON files found in form-exports directory", 404);
     }
 
-    const results = [];
-    const errors = [];
+    const results: any[] = [];
+    const errors: any[] = [];
 
     for (const file of files) {
       const result = await processFormFile(file, exportDir);

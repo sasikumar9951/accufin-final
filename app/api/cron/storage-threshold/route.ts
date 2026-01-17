@@ -26,7 +26,7 @@ async function createAdminNotifications(
 ): Promise<void> {
   if (admins.length > 0) {
     await prisma.notification.createMany({
-      data: admins.map((a) => ({
+      data: admins.map((a: any) => ({
         title,
         message,
         userId: a.id,

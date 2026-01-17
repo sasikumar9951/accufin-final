@@ -36,7 +36,7 @@ export async function GET() {
 
     // Get files received from admin for each user
     const usersWithFileCounts = await Promise.all(
-      users.map(async (user) => {
+      users.map(async (user: any) => {
         const filesReceivedFromAdmin = await prisma.file.count({
           where: {
             receivedById: user.id,
@@ -77,7 +77,7 @@ export async function GET() {
     );
 
     const signedUrlUsers = await Promise.all(
-      usersWithFileCounts.map(async (user) => {
+      usersWithFileCounts.map(async (user: any) => {
         if (user.profileUrl) {
           const signedUrl = await getSignedUrlFromPath(user.profileUrl);
           return { ...user, profileUrl: signedUrl };
@@ -86,7 +86,7 @@ export async function GET() {
       })
     );
 
-    const usersWithAllCounts = signedUrlUsers.map((user) => {
+    const usersWithAllCounts = signedUrlUsers.map((user: any) => {
       return {
         ...user,
         uploadedFiles: user.filesUploadedToAdmin,

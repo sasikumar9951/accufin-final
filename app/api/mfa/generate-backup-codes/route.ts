@@ -46,7 +46,7 @@ export async function POST() {
 
     // Store hashed codes in database
     await prisma.mfaBackupCode.createMany({
-      data: hashedCodes.map((hashedCode) => ({
+      data: hashedCodes.map((hashedCode: any) => ({
         hashedCode,
         userId: user.id,
       })),

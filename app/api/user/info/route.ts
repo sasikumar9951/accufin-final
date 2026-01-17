@@ -29,7 +29,7 @@ export async function GET() {
     },
   });
   if (!user) return error("User not found", 404);
-  let signedUrl = null;
+  let signedUrl: string | null = null;
   if (user.profileUrl) {
     try {
       // Check if it's a Google profile image URL
@@ -37,11 +37,11 @@ export async function GET() {
         // For Google profile images, use the URL directly but ensure it's properly formatted
         signedUrl = user.profileUrl;
         // If the URL doesn't have size parameters, add a reasonable default
-        if (!signedUrl.includes('=s') && !signedUrl.includes('=w')) {
+        if (signedUrl && !signedUrl.includes('=s') && !signedUrl.includes('=w')) {
           signedUrl = signedUrl + '=s200';
         }
         // If it has =s96-c, it might be better to change to a simpler format for better compatibility
-        if (signedUrl.includes('=s96-c')) {
+        if (signedUrl && signedUrl.includes('=s96-c')) {
           signedUrl = signedUrl.replace('=s96-c', '=s200');
         }
       } else if (user.profileUrl.startsWith('https://')) {
@@ -106,7 +106,7 @@ export async function PUT(req: NextRequest) {
       sendBirthdayEmail: true,
     },
   });
-  let signedUrl = null;
+  let signedUrl: string | null = null;
   if (user.profileUrl) {
     try {
       // Check if it's a Google profile image URL
@@ -114,11 +114,11 @@ export async function PUT(req: NextRequest) {
         // For Google profile images, use the URL directly but ensure it's properly formatted
         signedUrl = user.profileUrl;
         // If the URL doesn't have size parameters, add a reasonable default
-        if (!signedUrl.includes('=s') && !signedUrl.includes('=w')) {
+        if (signedUrl && !signedUrl.includes('=s') && !signedUrl.includes('=w')) {
           signedUrl = signedUrl + '=s200';
         }
         // If it has =s96-c, it might be better to change to a simpler format for better compatibility
-        if (signedUrl.includes('=s96-c')) {
+        if (signedUrl && signedUrl.includes('=s96-c')) {
           signedUrl = signedUrl.replace('=s96-c', '=s200');
         }
       } else if (user.profileUrl.startsWith('https://')) {

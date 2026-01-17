@@ -3,7 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { batchMoveS3Objects, s3 } from "@/lib/s3";
-import { validateTargetFolderUserUploaded, validateUserItemsUserUploaded } from "@/lib/admin-file-utils";
+import {
+  validateTargetFolderUserUploaded,
+  validateUserItemsUserUploaded,
+} from "@/lib/admin-file-utils";
 import { getDescendantFiles, isDescendantFolder } from "@/lib/file-helpers";
 import { generateUniqueNamesForItems } from "@/lib/file-naming-utils";
 
@@ -21,7 +24,7 @@ interface AdminUserUploadedBulkMoveRequest {
 const generateNewS3Path = (
   originalPath: string,
   newFolderId: string | null,
-  userId: string
+  userId: string,
 ): string => {
   if (!originalPath) return "";
   const parts = originalPath.split("/");
@@ -41,13 +44,17 @@ const generateNewS3Path = (
 const checkFolderDescendants = async (
   items: BulkMoveItem[],
   targetFolderId: string | null,
-  userId: string
+  userId: string,
 ): Promise<boolean> => {
   if (!targetFolderId) return false;
   const whereExtra = { uploadedById: userId, type: "folder" } as const;
   for (const item of items) {
     if (item.type === "folder") {
-      const isDesc = await isDescendantFolder(item.id, targetFolderId, whereExtra);
+      const isDesc = await isDescendantFolder(
+        item.id,
+        targetFolderId,
+        whereExtra,
+      );
       if (isDesc) return true;
     }
   }
@@ -62,39 +69,52 @@ const processItemsForMove = async (
   userItems: any[],
   targetFolderId: string | null,
   userId: string,
-  uniqueNames: string[]
+  uniqueNames: string[],
 ) => {
   const s3Operations: { source: string; destination: string }[] = [];
-  const dbUpdates: { id: string; newPath: string; newParentFolderId: string | null; newName?: string }[] = [];
+  const dbUpdates: {
+    id: string;
+    newPath: string;
+    newParentFolderId: string | null;
+    newName?: string;
+  }[] = [];
 
   for (let i = 0; i < userItems.length; i++) {
     const userItem = userItems[i];
     const uniqueName = uniqueNames[i];
     if (userItem.type !== "folder" && userItem.path) {
-      const newPath = generateNewS3Path(
-        userItem.path,
-        targetFolderId,
-        userId
-      );
+      const newPath = generateNewS3Path(userItem.path, targetFolderId, userId);
       s3Operations.push({ source: userItem.path, destination: newPath });
-      dbUpdates.push({ id: userItem.id, newPath, newParentFolderId: targetFolderId, newName: uniqueName });
+      dbUpdates.push({
+        id: userItem.id,
+        newPath,
+        newParentFolderId: targetFolderId,
+        newName: uniqueName,
+      });
     } else if (userItem.type === "folder") {
-      const descendantFiles = await getDescendantFiles(userItem.id, { uploadedById: userId });
+      const descendantFiles = await getDescendantFiles(userItem.id, {
+        uploadedById: userId,
+      });
       for (const file of descendantFiles) {
         if (file.path) {
-          const newPath = generateNewS3Path(
-            file.path,
-            targetFolderId,
-            userId
-          );
+          const newPath = generateNewS3Path(file.path, targetFolderId, userId);
           s3Operations.push({ source: file.path, destination: newPath });
-          dbUpdates.push({ id: file.id, newPath, newParentFolderId: file.parentFolderId });
+          dbUpdates.push({
+            id: file.id,
+            newPath,
+            newParentFolderId: file.parentFolderId,
+          });
         }
       }
-      dbUpdates.push({ id: userItem.id, newPath: "", newParentFolderId: targetFolderId, newName: uniqueName });
+      dbUpdates.push({
+        id: userItem.id,
+        newPath: "",
+        newParentFolderId: targetFolderId,
+        newName: uniqueName,
+      });
     }
   }
-  
+
   return { s3Operations, dbUpdates };
 };
 
@@ -112,13 +132,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No items to move" }, { status: 400 });
     }
     if (!userId) {
-      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 },
+      );
     }
 
     // Validate target folder
-    const isValidTarget = await validateTargetFolderUserUploaded(targetFolderId, userId);
+    const isValidTarget = await validateTargetFolderUserUploaded(
+      targetFolderId,
+      userId,
+    );
     if (!isValidTarget) {
-      return NextResponse.json({ error: "Target folder not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Target folder not found" },
+        { status: 404 },
+      );
     }
 
     // Validate user items
@@ -132,16 +161,20 @@ export async function POST(request: NextRequest) {
     if (userItems.length !== items.length) {
       return NextResponse.json(
         { error: "Some items not found or unauthorized" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     // Check for folder descendant conflicts
-    const hasDescendantConflict = await checkFolderDescendants(items, targetFolderId, userId);
+    const hasDescendantConflict = await checkFolderDescendants(
+      items,
+      targetFolderId,
+      userId,
+    );
     if (hasDescendantConflict) {
       return NextResponse.json(
         { error: "Cannot move folder into its own descendant" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -153,12 +186,16 @@ export async function POST(request: NextRequest) {
       },
       select: { name: true },
     });
-    const existingNames = new Set(existingFiles.map(f => f.name).filter((name): name is string => name !== null));
+    const existingNames = new Set<string>(
+      existingFiles
+        .map((f: { name: string | null }) => f.name)
+        .filter((name: string | null): name is string => name !== null),
+    );
 
     // Generate unique names for all items being moved
     const uniqueNames = generateUniqueNamesForItems(
-      userItems.map(item => ({ name: item.name || "Unnamed" })),
-      existingNames
+      userItems.map((item) => ({ name: item.name || "Unnamed" })),
+      existingNames,
     );
 
     // Process items for move
@@ -166,17 +203,20 @@ export async function POST(request: NextRequest) {
       userItems,
       targetFolderId,
       userId,
-      uniqueNames
+      uniqueNames,
     );
 
     if (s3Operations.length > 0) {
       const ok = await batchMoveS3Objects(s3Operations);
       if (!ok) {
-        return NextResponse.json({ error: "Failed to move files in S3" }, { status: 500 });
+        return NextResponse.json(
+          { error: "Failed to move files in S3" },
+          { status: 500 },
+        );
       }
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       for (const update of dbUpdates) {
         const data: any = { parentFolderId: update.newParentFolderId };
         if (update.newPath) data.path = update.newPath;
@@ -188,8 +228,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, movedCount: items.length });
   } catch (error) {
     console.error("Error in admin user-uploaded bulk move:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
-
-

@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       });
       if (admins.length > 0) {
         await prisma.notification.createMany({
-          data: admins.map((a) => ({
+          data: admins.map((a: any) => ({
             title: "User Password Reset",
             message: `User ${user.email} reset their password using token`,
             userId: a.id,

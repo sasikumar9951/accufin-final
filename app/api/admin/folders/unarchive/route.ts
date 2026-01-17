@@ -68,7 +68,7 @@ export async function PATCH(request: NextRequest) {
     await unarchiveRootFolder(folderId, selectedUserId);
 
     // Then unarchive all descendants while preserving their parent-child relationships
-    const descendantIds = allFileIds.filter((id) => id !== folderId);
+    const descendantIds = allFileIds.filter((id: any) => id !== folderId);
     await unarchiveDescendants(descendantIds, selectedUserId);
 
     // Create a notification for the user about admin unarchiving the folder

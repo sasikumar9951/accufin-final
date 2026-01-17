@@ -41,8 +41,8 @@ export async function POST(request: Request) {
       select: { email: true },
     });
     const adminEmails = admins
-      .map((a) => a.email)
-      .filter((e): e is string => !!e);
+      .map((a: any) => a.email)
+      .filter((e: any): e is string => !!e);
 
     for (const user of users) {
       try {
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
         // Notify all admins
         if (adminEmails.length > 0) {
           await Promise.all(
-            adminEmails.map((adminEmail) =>
+            adminEmails.map((adminEmail: any) =>
               sendPermanentDeletionEmailToSpecificAdmin({
                 adminEmail,
                 userEmail: user.email || undefined,

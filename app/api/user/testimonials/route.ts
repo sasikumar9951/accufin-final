@@ -16,7 +16,7 @@ export async function GET(_request: NextRequest) {
       },
     });
     const withSignedUrls = await Promise.all(
-      testimonials.map(async (t) => ({
+      testimonials.map(async (t: any) => ({
         id: t.id,
         name: t.name,
         role: t.role,

@@ -34,7 +34,7 @@ const createFieldLabels = (form: any): { [fieldId: string]: string } => {
 // Helper function to build field object from a specific field type
 const buildFieldObject = (
   fieldId: string,
-  form: any
+  form: any,
 ): Record<string, any> | null => {
   const input = form.inputs.find((i: any) => i.id === fieldId);
   if (input) {
@@ -95,7 +95,9 @@ const buildFieldObject = (
     };
   }
 
-  const netPromoterScore = form.netPromoterScores.find((n: any) => n.id === fieldId);
+  const netPromoterScore = form.netPromoterScores.find(
+    (n: any) => n.id === fieldId,
+  );
   if (netPromoterScore) {
     return {
       id: netPromoterScore.id,
@@ -124,7 +126,7 @@ const buildFieldObject = (
 
 // Helper function to build fields array in sequence order
 const buildFieldsArray = (form: any): any[] => {
-  const fields = [];
+  const fields: any[] = [];
 
   for (const fieldId of form.sequence) {
     const field = buildFieldObject(fieldId, form);
@@ -139,7 +141,7 @@ const buildFieldsArray = (form: any): any[] => {
 // GET - Get single form submission for admin
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await requireAdminSession();
@@ -186,7 +188,7 @@ export async function GET(
     const fields = buildFieldsArray(formResponse.form);
 
     // Add labels to answers
-    const answersWithLabels = formResponse.answers.map((answer) => ({
+    const answersWithLabels = formResponse.answers.map((answer: any) => ({
       ...answer,
       fieldLabel: fieldLabels[answer.fieldId] || "Unknown Field",
     }));
@@ -214,7 +216,7 @@ export async function GET(
 // DELETE - Delete a single form submission (and its answers) for admin
 export async function DELETE(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await requireAdminSession();

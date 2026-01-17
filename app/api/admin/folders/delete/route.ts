@@ -64,7 +64,7 @@ export async function DELETE(request: NextRequest) {
     });
 
     // Calculate total storage to decrement (only for actual files, not folders)
-    const totalStorageKB = filesToDelete.reduce((sum, f) => {
+    const totalStorageKB = filesToDelete.reduce((sum: any, f: any) => {
       if (f.type !== "folder") {
         return sum + parseFileSizeToKB(f.size);
       }
@@ -72,7 +72,7 @@ export async function DELETE(request: NextRequest) {
     }, 0);
 
     // Delete from database and update storage
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // Delete all files and folders
       await tx.file.deleteMany({
         where: {
@@ -103,7 +103,7 @@ export async function DELETE(request: NextRequest) {
       const s3FolderPath = s3.getUserSendingFilePath(
         selectedUserId,
         "",
-        folderId
+        folderId,
       );
       await deleteFolderFromS3(s3FolderPath);
     } catch (s3Error) {
@@ -161,14 +161,14 @@ export async function POST(request: NextRequest) {
     });
 
     // Calculate total storage to decrement (only for actual files, not folders)
-    const totalStorageKB = filesToDelete.reduce((sum, f) => {
+    const totalStorageKB = filesToDelete.reduce((sum: any, f: any) => {
       if (f.type !== "folder") {
         return sum + parseFileSizeToKB(f.size);
       }
       return sum;
     }, 0);
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await tx.file.deleteMany({
         where: {
           ...scopeFilter,

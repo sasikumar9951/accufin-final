@@ -44,7 +44,7 @@ export async function PUT(req: NextRequest) {
   });
   if (admins.length > 0) {
     await prisma.notification.createMany({
-      data: admins.map((a) => ({
+      data: admins.map((a: any) => ({
         title: `User Password Changed`,
         message: `User ${user?.email || session.user.id} changed their password`,
         userId: a.id,

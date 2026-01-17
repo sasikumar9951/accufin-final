@@ -6,7 +6,7 @@ import { toCsv, buildCsvDownloadResponse } from "@/lib/csv";
 
 
 function mapLinksToRows(links: Array<{ name: string | null; url: string | null }>) {
-  return links.map((l) => ({
+  return links.map((l: any) => ({
     Name: l.name,
     Url: l.url,
   }));

@@ -6,7 +6,7 @@ import { deleteFileFromS3, deleteFolderFromS3, s3 } from "@/lib/s3";
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -71,7 +71,7 @@ export async function DELETE(
       });
 
       // Calculate total storage to decrement (only for actual files, not folders)
-      const totalStorageKB = filesToDelete.reduce((sum, f) => {
+      const totalStorageKB = filesToDelete.reduce((sum: any, f: any) => {
         if (f.type !== "folder") {
           return sum + parseFileSizeToKB(f.size);
         }
@@ -178,7 +178,7 @@ export async function DELETE(
     console.error("Error deleting file/folder:", e);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

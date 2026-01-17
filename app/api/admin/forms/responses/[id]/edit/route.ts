@@ -18,7 +18,7 @@ interface EditSubmissionRequest {
 // PUT - Update form submission
 export async function PUT(
   request: NextRequest,
-  { params }: {_req: Request, params: Promise<{ id: string }> }
+  { params }: { _req: Request; params: Promise<{ id: string }> },
 ) {
   try {
     const session = await requireAdminSession();
@@ -30,7 +30,8 @@ export async function PUT(
     // Validate request
     if (!Array.isArray(answers)) return error("Invalid answers format", 400);
 
-    if (typeof isChecked !== "boolean") return error("Invalid privacy consent value", 400);
+    if (typeof isChecked !== "boolean")
+      return error("Invalid privacy consent value", 400);
     const paramsID = (await params).id;
     // Get the existing form response to verify it exists and get user info
     const existingResponse = await prisma.formResponse.findUnique({
@@ -90,13 +91,13 @@ export async function PUT(
 
     // Validate field IDs exist in form
     const validFieldIds = new Set([
-      ...existingResponse.form.inputs.map((f) => f.id),
-      ...existingResponse.form.selections.map((f) => f.id),
-      ...existingResponse.form.multipleChoice.map((f) => f.id),
-      ...existingResponse.form.ratings.map((f) => f.id),
-      ...existingResponse.form.matrices.map((f) => f.id),
-      ...existingResponse.form.netPromoterScores.map((f) => f.id),
-      ...existingResponse.form.separators.map((f) => f.id),
+      ...existingResponse.form.inputs.map((f: any) => f.id),
+      ...existingResponse.form.selections.map((f: any) => f.id),
+      ...existingResponse.form.multipleChoice.map((f: any) => f.id),
+      ...existingResponse.form.ratings.map((f: any) => f.id),
+      ...existingResponse.form.matrices.map((f: any) => f.id),
+      ...existingResponse.form.netPromoterScores.map((f: any) => f.id),
+      ...existingResponse.form.separators.map((f: any) => f.id),
     ]);
 
     for (const answer of answers) {
@@ -106,7 +107,7 @@ export async function PUT(
     }
 
     // Update form response and answers in a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Update privacy consent
       const updatedFormResponse = await tx.formResponse.update({
         where: { id: paramsID },
@@ -135,8 +136,8 @@ export async function PUT(
               rowId: answer.rowId,
               columnId: answer.columnId,
             },
-          })
-        )
+          }),
+        ),
       );
 
       return { formResponse: updatedFormResponse, answers: newAnswers };
@@ -161,7 +162,7 @@ export async function PUT(
         message: "Form submission updated successfully",
         responseId: result.formResponse.id,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("Error updating form submission:", err);

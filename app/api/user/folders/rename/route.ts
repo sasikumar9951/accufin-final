@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const oldFull = parentPath ? `${parentPath}/${folderName}` : folderName;
     const newFull = parentPath ? `${parentPath}/${newName}` : newName;
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx: any) => {
       // Update descendants whose folderName starts with oldFull
       const descendants = await tx.file.findMany({
         where: {

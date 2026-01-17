@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
       maxStorageLimit: maxStorageLimitIncoming,
     } = await req.json();
 
-    if (!email || !password) return error("Email and password are required.", 400);
+    if (!email || !password)
+      return error("Email and password are required.", 400);
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return error("User already exists.", 409);
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await hash(password, 10);
 
     // Parse dateOfBirth if provided
-    let parsedDateOfBirth = null;
+    let parsedDateOfBirth: Date | null = null;
     if (dateOfBirth) {
       parsedDateOfBirth = new Date(dateOfBirth);
       if (Number.isNaN(parsedDateOfBirth.getTime())) {
@@ -38,9 +39,10 @@ export async function POST(req: NextRequest) {
     }
 
     const isAdmin = Boolean(isAdminIncoming);
-    const maxStorageLimit = typeof maxStorageLimitIncoming === "number" && maxStorageLimitIncoming > 0
-      ? Math.floor(maxStorageLimitIncoming)
-      : undefined;
+    const maxStorageLimit =
+      typeof maxStorageLimitIncoming === "number" && maxStorageLimitIncoming > 0
+        ? Math.floor(maxStorageLimitIncoming)
+        : undefined;
 
     const user = await prisma.user.create({
       data: {

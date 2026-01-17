@@ -49,7 +49,7 @@ export async function PATCH(request: NextRequest) {
     });
 
     // Then archive all descendants while preserving their parent-child relationships
-    const descendantIds = allFileIds.filter((id) => id !== folderId);
+    const descendantIds = allFileIds.filter((id: any) => id !== folderId);
     if (descendantIds.length > 0) {
       await prisma.file.updateMany({
         where: {

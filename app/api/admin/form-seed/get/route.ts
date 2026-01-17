@@ -10,9 +10,9 @@ export async function GET() {
     if (!session) return error("Unauthorized", 401);
     // Hardcoded array of form IDs to export
     const formIds = [
- "3084168d-0fc4-427a-89ae-08d7656f9b63",
- "6609998b-e097-4e25-8bc8-9f85876cb454",
- "02ed3dca-7a07-4fb8-bf2b-bde096b7fa10"
+      "3084168d-0fc4-427a-89ae-08d7656f9b63",
+      "6609998b-e097-4e25-8bc8-9f85876cb454",
+      "02ed3dca-7a07-4fb8-bf2b-bde096b7fa10",
     ];
 
     const exportDir = path.join(process.cwd(), "form-exports");
@@ -22,8 +22,8 @@ export async function GET() {
       fs.mkdirSync(exportDir, { recursive: true });
     }
 
-    const results = [];
-    const errors = [];
+    const results: any[] = [];
+    const errors: string[] = [];
 
     for (const formId of formIds) {
       try {
@@ -63,7 +63,7 @@ export async function GET() {
       } catch (error) {
         console.error(`❌ Error exporting form ${formId}:`, error);
         errors.push(
-          `Error exporting ${formId}: ${error instanceof Error ? error.message : String(error)}`
+          `Error exporting ${formId}: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }

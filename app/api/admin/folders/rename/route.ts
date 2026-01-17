@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       scopeFilter.isAdminOnlyPrivateFile = isPrivate;
     }
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx: any) => {
       // Update descendants whose folderName starts with oldFull
       const descendants = await tx.file.findMany({
         where: {

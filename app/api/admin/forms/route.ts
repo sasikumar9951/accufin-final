@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     if (!title || !fields || !Array.isArray(fields)) return error("Title and fields are required", 400);
 
     // Create form with all fields in a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Create the form first
       const initialAssignedUsersCount = Array.isArray(assignedUserIds)
         ? assignedUserIds.length
@@ -201,7 +201,7 @@ export async function DELETE(request: NextRequest) {
     if (!formId) return error("Form ID is required", 400);
 
     // Delete form and all related data in a transaction
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // Delete all form responses and answers first
       const formResponses = await tx.formResponse.findMany({
         where: { formId },

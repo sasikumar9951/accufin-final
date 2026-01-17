@@ -14,7 +14,7 @@ function mapTestimonialsToRows(
     isActive: boolean;
   }>
 ) {
-  return testimonials.map((t) => ({
+  return testimonials.map((t: any) => ({
     Name: t.name,
     Role: t.role,
     Text: t.text,

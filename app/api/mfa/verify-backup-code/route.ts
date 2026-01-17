@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify backup code against all unused codes
-    let validCode = null;
+    let validCode: (typeof backupCodes)[0] | null = null;
     for (const code of backupCodes) {
       const isValid = await verifyBackupCode(cleanCode, code.hashedCode);
       if (isValid) {
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     // Mark backup code as used
     await prisma.mfaBackupCode.update({
-      where: { id: validCode.id },
+      where: { id: validCode!.id },
       data: {
         used: true,
         usedAt: new Date(),

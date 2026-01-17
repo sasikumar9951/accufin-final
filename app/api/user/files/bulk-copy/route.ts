@@ -19,12 +19,11 @@ interface BulkCopyRequest {
 
 // path generation moved to lib/file-bulk
 
-
 // Build folder ID mapping without creating database entries
 const buildFolderIdMap = async (
   originalFolderId: string,
   userId: string,
-  folderIdMap: Map<string, string> // Map original folder IDs to new folder IDs
+  folderIdMap: Map<string, string>, // Map original folder IDs to new folder IDs
 ): Promise<void> => {
   // Get all direct children of this folder
   const children = await prisma.file.findMany({
@@ -51,7 +50,7 @@ const buildFolderIdMap = async (
 // Get all descendant files and folders in the correct order
 const getAllDescendantItems = async (
   folderId: string,
-  userId: string
+  userId: string,
 ): Promise<{
   files: any[];
   folders: any[];
@@ -91,7 +90,6 @@ const getAllDescendantItems = async (
   return { files: allFiles, folders: allFolders };
 };
 
-
 // Process file copy operations
 const processFileCopy = (
   userItem: any,
@@ -100,7 +98,7 @@ const processFileCopy = (
   adminId: string,
   s3Operations: { source: string; destination: string }[],
   dbCreations: any[],
-  uniqueName: string
+  uniqueName: string,
 ) => {
   if (userItem.type !== "folder" && userItem.path) {
     const newFileId = uuidv4();
@@ -108,7 +106,7 @@ const processFileCopy = (
       userItem.path,
       targetFolderId,
       userId,
-      newFileId
+      newFileId,
     );
 
     s3Operations.push({
@@ -140,7 +138,7 @@ const processFolderCopy = async (
   s3Operations: { source: string; destination: string }[],
   dbCreations: any[],
   folderIdMap: Map<string, string>,
-  uniqueName: string
+  uniqueName: string,
 ) => {
   if (userItem.type === "folder") {
     const newFolderId = uuidv4();
@@ -159,16 +157,19 @@ const processFolderCopy = async (
     });
 
     // Get all descendant items (folders and files) in the correct order
-    const { files: descendantFiles, folders: descendantFolders } = await getAllDescendantItems(userItem.id, userId);
+    const { files: descendantFiles, folders: descendantFolders } =
+      await getAllDescendantItems(userItem.id, userId);
 
     // First, create all folders in the correct hierarchy
     for (const folder of descendantFolders) {
       const newSubFolderId = uuidv4();
       folderIdMap.set(folder.id, newSubFolderId);
-      
+
       // Find the correct parent folder ID
       const originalParentId = folder.parentFolderId;
-      const newParentId = originalParentId ? folderIdMap.get(originalParentId) : newFolderId;
+      const newParentId = originalParentId
+        ? folderIdMap.get(originalParentId)
+        : newFolderId;
 
       dbCreations.push({
         id: newSubFolderId,
@@ -187,13 +188,15 @@ const processFolderCopy = async (
       if (file.path) {
         const newFileId = uuidv4();
         const originalParentId = file.parentFolderId;
-        const newParentId = originalParentId ? folderIdMap.get(originalParentId) : newFolderId;
+        const newParentId = originalParentId
+          ? folderIdMap.get(originalParentId)
+          : newFolderId;
 
         const newPath = generateUserCopyPath(
           file.path,
           newParentId || null,
           userId,
-          newFileId
+          newFileId,
         );
 
         s3Operations.push({
@@ -221,7 +224,7 @@ const processFolderCopy = async (
 // Check if storage limit is exceeded
 const checkStorageLimit = async (
   userId: string,
-  dbCreations: any[]
+  dbCreations: any[],
 ): Promise<boolean> => {
   const totalAddedKB = calculateTotalStorageKB(dbCreations);
 
@@ -239,21 +242,22 @@ const checkStorageLimit = async (
 };
 
 // Execute database transaction for copy operations
-const executeCopyTransaction = async (
-  dbCreations: any[],
-  userId: string
-) => {
+const executeCopyTransaction = async (dbCreations: any[], userId: string) => {
   await prisma.$transaction(
-    async (tx) => {
-      const folderCreations = dbCreations.filter((item) => item.type === "folder");
-      const fileCreations = dbCreations.filter((item) => item.type !== "folder");
+    async (tx: any) => {
+      const folderCreations = dbCreations.filter(
+        (item: any) => item.type === "folder",
+      );
+      const fileCreations = dbCreations.filter(
+        (item: any) => item.type !== "folder",
+      );
       const BATCH_SIZE = 100;
 
       if (folderCreations.length > 0) {
         for (let i = 0; i < folderCreations.length; i += BATCH_SIZE) {
           const batch = folderCreations.slice(i, i + BATCH_SIZE);
           await tx.file.createMany({
-            data: batch.map((creation) => ({
+            data: batch.map((creation: any) => ({
               ...creation,
               createdAt: new Date(),
               updatedAt: new Date(),
@@ -266,7 +270,7 @@ const executeCopyTransaction = async (
         for (let i = 0; i < fileCreations.length; i += BATCH_SIZE) {
           const batch = fileCreations.slice(i, i + BATCH_SIZE);
           await tx.file.createMany({
-            data: batch.map((creation) => ({
+            data: batch.map((creation: any) => ({
               ...creation,
               createdAt: new Date(),
               updatedAt: new Date(),
@@ -296,7 +300,7 @@ const executeCopyTransaction = async (
         });
 
         await tx.notification.createMany({
-          data: admins.map((admin) => ({
+          data: admins.map((admin: any) => ({
             title: `Files copied by ${userName?.name || "User"}`,
             message: `${fileCreations.length + folderCreations.length} item(s) copied`,
             userId: admin.id,
@@ -304,7 +308,7 @@ const executeCopyTransaction = async (
         });
       }
     },
-    { timeout: 30000 }
+    { timeout: 30000 },
   );
 };
 
@@ -332,7 +336,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate all items belong to the user
-    const itemIds = items.map((item) => item.id);
+    const itemIds = items.map((item: any) => item.id);
     const userItems = await prisma.file.findMany({
       where: {
         id: { in: itemIds },
@@ -349,7 +353,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (userItems.length !== items.length) return error("Some items not found or unauthorized", 403);
+    if (userItems.length !== items.length)
+      return error("Some items not found or unauthorized", 403);
 
     // Get admin user for receivedById
     const admin = await prisma.user.findFirst({
@@ -365,16 +370,19 @@ export async function POST(request: NextRequest) {
       },
       select: { name: true },
     });
-    const existingNames = new Set(
+    const existingNames: Set<string> = new Set(
       existingFiles
-        .map((f) => f.name)
-        .filter((name): name is string => typeof name === "string" && name.length > 0)
+        .map((f: any) => f.name)
+        .filter(
+          (name: any): name is string =>
+            typeof name === "string" && name.length > 0,
+        ),
     );
 
     // Generate unique names for all items being copied
     const uniqueNames = generateUniqueNamesForItems(
-      userItems.map(item => ({ name: item.name || "Unnamed" })),
-      existingNames
+      userItems.map((item) => ({ name: item.name || "Unnamed" })),
+      existingNames,
     );
 
     // Collect all S3 operations and DB operations needed
@@ -394,7 +402,7 @@ export async function POST(request: NextRequest) {
         admin.id,
         s3Operations,
         dbCreations,
-        uniqueName
+        uniqueName,
       );
 
       await processFolderCopy(
@@ -405,13 +413,14 @@ export async function POST(request: NextRequest) {
         s3Operations,
         dbCreations,
         folderIdMap,
-        uniqueName
+        uniqueName,
       );
     }
 
     // Check storage limit
     const limitExceeded = await checkStorageLimit(session.user.id, dbCreations);
-    if (limitExceeded) return error("Storage limit reached. Cannot copy items.", 403);
+    if (limitExceeded)
+      return error("Storage limit reached. Cannot copy items.", 403);
 
     // Execute S3 copies first
     if (s3Operations.length > 0) {

@@ -11,7 +11,7 @@ export async function GET() {
       return NextResponse.json([]);
     }
 
-    const contactIds = contacts.map((c) => c.id);
+    const contactIds = contacts.map((c: any) => c.id);
 
     const [links, importantDates] = await Promise.all([
       prisma.link.findMany({
@@ -42,7 +42,7 @@ export async function GET() {
       if (arr) arr.push(date);
     }
 
-    const result = contacts.map((c) => ({
+    const result = contacts.map((c: any) => ({
       ...c,
       links: linksByContactId.get(c.id) ?? [],
       importantDates: datesByContactId.get(c.id) ?? [],

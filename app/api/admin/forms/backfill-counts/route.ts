@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const updates = forms.map((f) => {
+    const updates = forms.map((f: any) => {
       const fieldsCount =
         f._count.inputs +
         f._count.selections +
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       updated: result.length,
-      details: forms.map((f) => ({
+      details: forms.map((f: any) => ({
         id: f.id,
         fieldsCount:
           f._count.inputs +

@@ -47,7 +47,7 @@ export async function GET() {
     }
 
     // Combine forms with completion status
-    const formsWithStatus = activeForms.map((form) => ({
+    const formsWithStatus = activeForms.map((form: any) => ({
       ...form,
       isCompleted: completedFormsMap.has(form.id),
       completedAt: completedFormsMap.get(form.id) || null,

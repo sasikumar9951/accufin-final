@@ -27,7 +27,7 @@ export async function GET() {
 
     // Calculate time since last activity for each user
     const now = new Date();
-    const usersWithActivityInfo = users.map((user) => {
+    const usersWithActivityInfo = users.map((user: any) => {
       const timeSinceLastActivity = user.lastActivityAt
         ? Math.floor(
             (now.getTime() - user.lastActivityAt.getTime()) / 1000 / 60

@@ -98,7 +98,7 @@ export async function GET(
     if (!form.isActive) return error("This form is no longer active", 400);
 
     // Build the fields array in sequence order
-    const fields = [];
+    const fields: any[] = [];
 
     for (const fieldId of form.sequence) {
       const input = form.inputs.find((i) => i.id === fieldId);

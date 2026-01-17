@@ -31,7 +31,7 @@ export async function GET() {
       },
     });
 
-    const rows = dates.map((d) => ({
+    const rows = dates.map((d: any) => ({
       Title: d.title,
       Description: d.description ?? "",
       // Prefix with apostrophe to force Excel to treat as text and avoid #####

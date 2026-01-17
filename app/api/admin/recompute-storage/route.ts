@@ -36,7 +36,7 @@ function formatStorageSize(kb: number): string {
 // Create admin notifications for storage threshold
 async function createAdminNotifications(
   title: string,
-  message: string
+  message: string,
 ): Promise<void> {
   const admins = await prisma.user.findMany({
     where: { isAdmin: true },
@@ -45,7 +45,7 @@ async function createAdminNotifications(
 
   if (admins.length > 0) {
     await prisma.notification.createMany({
-      data: admins.map((a) => ({
+      data: admins.map((a: any) => ({
         title,
         message,
         userId: a.id,
@@ -58,7 +58,7 @@ async function createAdminNotifications(
 async function createUserNotification(
   userId: string,
   title: string,
-  message: string
+  message: string,
 ): Promise<void> {
   await prisma.notification.create({
     data: {
@@ -77,7 +77,7 @@ async function handleStorageThresholds(
     maxStorageLimit: number | null;
     email: string | null;
     name: string | null;
-  }
+  },
 ): Promise<{ triggered90: boolean; triggered100: boolean }> {
   let triggered90 = false;
   let triggered100 = false;
@@ -131,7 +131,6 @@ async function recomputeUserStorageUsed(userId: string): Promise<{
 }> {
   console.log(`Recomputing storage for user: ${userId}`);
 
-
   const userFiles = await prisma.file.findMany({
     where: {
       OR: [
@@ -160,29 +159,32 @@ async function recomputeUserStorageUsed(userId: string): Promise<{
 
   // Remove duplicates (in case a file has both uploadedById and receivedById as the same user)
   const uniqueFiles = userFiles.filter(
-    (file, index, self) => index === self.findIndex((f) => f.id === file.id)
+    (file: any, index: any, self: any) =>
+      index === self.findIndex((f: any) => f.id === file.id),
   );
 
   console.log(`Found ${uniqueFiles.length} unique files for user ${userId}`);
 
   // Calculate storage breakdown by different categories
   const userUploadedFiles = uniqueFiles.filter(
-    (f) => f.uploadedById === userId
+    (f: any) => f.uploadedById === userId,
   );
   const userReceivedFiles = uniqueFiles.filter(
-    (f) => f.receivedById === userId && f.uploadedById !== userId
+    (f: any) => f.receivedById === userId && f.uploadedById !== userId,
   );
-  const privateFiles = uniqueFiles.filter((f) => f.isAdminOnlyPrivateFile);
-  const responseFiles = uniqueFiles.filter((f) => !f.isAdminOnlyPrivateFile);
-  const archivedFiles = uniqueFiles.filter((f) => f.isArchived);
-  const unarchivedFiles = uniqueFiles.filter((f) => !f.isArchived);
+  const privateFiles = uniqueFiles.filter((f: any) => f.isAdminOnlyPrivateFile);
+  const responseFiles = uniqueFiles.filter(
+    (f: any) => !f.isAdminOnlyPrivateFile,
+  );
+  const archivedFiles = uniqueFiles.filter((f: any) => f.isArchived);
+  const unarchivedFiles = uniqueFiles.filter((f: any) => !f.isArchived);
 
   console.log(`- User uploaded: ${userUploadedFiles.length}`);
   console.log(`- User received: ${userReceivedFiles.length}`);
   console.log(`- Private files: ${privateFiles.length}`);
   console.log(`- Response files: ${responseFiles.length}`);
   console.log(
-    `- Archived: ${archivedFiles.length}, Unarchived: ${unarchivedFiles.length}`
+    `- Archived: ${archivedFiles.length}, Unarchived: ${unarchivedFiles.length}`,
   );
 
   // Calculate storage breakdown
@@ -190,15 +192,15 @@ async function recomputeUserStorageUsed(userId: string): Promise<{
     userUploaded: {
       count: userUploadedFiles.length,
       storageKB: userUploadedFiles.reduce(
-        (sum, f) => sum + parseSizeToKB(f.size),
-        0
+        (sum: any, f: any) => sum + parseSizeToKB(f.size),
+        0,
       ),
     },
     userReceived: {
       count: userReceivedFiles.length,
       storageKB: userReceivedFiles.reduce(
-        (sum, f) => sum + parseSizeToKB(f.size),
-        0
+        (sum: any, f: any) => sum + parseSizeToKB(f.size),
+        0,
       ),
     },
     byArchiveStatus: {
@@ -212,8 +214,8 @@ async function recomputeUserStorageUsed(userId: string): Promise<{
   };
 
   const totalKB = uniqueFiles.reduce(
-    (sum, f) => sum + parseSizeToKB(f.size),
-    0
+    (sum: any, f: any) => sum + parseSizeToKB(f.size),
+    0,
   );
   const roundedKB = Math.max(0, Math.round(totalKB));
 
@@ -291,7 +293,7 @@ export async function POST(request: NextRequest) {
     for (const user of users) {
       try {
         console.log(
-          `Processing user ${processedCount + 1}/${users.length}: ${user.email}`
+          `Processing user ${processedCount + 1}/${users.length}: ${user.email}`,
         );
         const result = await recomputeUserStorageUsed(user.id);
         results.push(result);
@@ -314,11 +316,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const totalStorage = results.reduce((sum, r) => sum + r.totalKB, 0);
-    const totalFiles = results.reduce((sum, r) => sum + r.fileCount, 0);
+    const totalStorage = results.reduce(
+      (sum: any, r: any) => sum + r.totalKB,
+      0,
+    );
+    const totalFiles = results.reduce(
+      (sum: any, r: any) => sum + r.fileCount,
+      0,
+    );
 
     console.log(
-      `Storage recomputation completed. Total: ${totalFiles} files, ${totalStorage} KB`
+      `Storage recomputation completed. Total: ${totalFiles} files, ${totalStorage} KB`,
     );
 
     return NextResponse.json({
@@ -337,7 +345,7 @@ export async function POST(request: NextRequest) {
     console.error("recompute-storage error", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -346,7 +354,6 @@ export async function GET(request: NextRequest) {
   // Allow GET for convenience (curl)
   return POST(request);
 }
-
 
 // curl -X GET "http://localhost:3000/api/admin/recompute-storage" \
 //   -H "x-admin-secret: admin"

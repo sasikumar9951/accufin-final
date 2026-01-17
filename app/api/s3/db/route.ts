@@ -77,7 +77,7 @@ async function handleFolderCreation(
   });
 
   await prisma.notification.createMany({
-    data: adminIds.map((a) => ({
+    data: adminIds.map((a: any) => ({
       title: "New Folder Created",
       message: `New folder '${folderName}' created by ${userName || "User"}`,
       userId: a.id,
@@ -123,7 +123,7 @@ async function sendStorageNotifications(params: {
 
     // Notify admins
     await prisma.notification.createMany({
-      data: adminIds.map((a) => ({
+      data: adminIds.map((a: any) => ({
         title: notifyTitle,
         message: `User ${sessionUserName || "User"} (${sessionUserEmail || userEmail || ""}) is at ${Math.min(100, Math.round(newPercent))}% storage (${usedReadable} of ${limitReadable}).`,
         userId: a.id,
@@ -202,7 +202,7 @@ async function notifyAdminsAboutUpload(
 ) {
   if (!isAdminOnlyPrivateFile) {
     await prisma.notification.createMany({
-      data: adminIds.map((a) => ({
+      data: adminIds.map((a: any) => ({
         title: "New File Uploaded",
         message: `A new file '${fileName}' has been uploaded by ${userName || "User"}`,
         userId: a.id,

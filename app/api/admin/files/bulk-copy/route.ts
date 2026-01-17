@@ -32,7 +32,7 @@ interface AdminBulkCopyRequest {
 const getAllDescendantItems = async (
   folderId: string,
   userId: string,
-  isPrivate: boolean
+  isPrivate: boolean,
 ): Promise<{
   files: any[];
   folders: any[];
@@ -62,7 +62,11 @@ const getAllDescendantItems = async (
     if (child.type === "folder") {
       allFolders.push(child);
       // Recursively get descendants
-      const descendants = await getAllDescendantItems(child.id, userId, isPrivate);
+      const descendants = await getAllDescendantItems(
+        child.id,
+        userId,
+        isPrivate,
+      );
       allFolders.push(...descendants.folders);
       allFiles.push(...descendants.files);
     } else {
@@ -77,7 +81,7 @@ const getAllDescendantItems = async (
 const getAllDescendantFiles = async (
   folderId: string,
   userId: string,
-  isPrivate: boolean
+  isPrivate: boolean,
 ): Promise<
   {
     id: string;
@@ -130,7 +134,7 @@ const getAllDescendantFiles = async (
       const descendants = await getAllDescendantFiles(
         child.id,
         userId,
-        isPrivate
+        isPrivate,
       );
       allFiles = allFiles.concat(descendants);
     } else {
@@ -147,7 +151,7 @@ const buildFolderIdMap = async (
   originalFolderId: string,
   userId: string,
   isPrivate: boolean,
-  folderIdMap: Map<string, string> // Map original folder IDs to new folder IDs
+  folderIdMap: Map<string, string>, // Map original folder IDs to new folder IDs
 ): Promise<void> => {
   const whereClause: any = {
     parentFolderId: originalFolderId,
@@ -187,7 +191,7 @@ const getFolderCreationData = async (
   userId: string,
   adminId: string,
   isPrivate: boolean,
-  folderIdMap: Map<string, string>
+  folderIdMap: Map<string, string>,
 ): Promise<any[]> => {
   const folderCreations: any[] = [];
 
@@ -237,7 +241,7 @@ const getFolderCreationData = async (
       userId,
       adminId,
       isPrivate,
-      folderIdMap
+      folderIdMap,
     );
     folderCreations.push(...subfolderData);
   }
@@ -248,7 +252,7 @@ const getFolderCreationData = async (
 // Helper function to check storage limit
 const checkStorageLimit = async (
   userId: string,
-  dbCreations: any[]
+  dbCreations: any[],
 ): Promise<{ success: boolean; error?: string }> => {
   const totalAddedKB = calculateTotalStorageKB(dbCreations);
 
@@ -277,7 +281,7 @@ const processFileCopy = (
   userId: string,
   isPrivate: boolean,
   adminId: string,
-  uniqueName: string
+  uniqueName: string,
 ) => {
   const newFileId = uuidv4();
   const newPath = generateAdminCopyPath(
@@ -286,7 +290,7 @@ const processFileCopy = (
     userId,
     isPrivate,
     adminId,
-    newFileId
+    newFileId,
   );
 
   return {
@@ -316,7 +320,7 @@ const processFolderCopy = async (
   userId: string,
   isPrivate: boolean,
   adminId: string,
-  uniqueName: string
+  uniqueName: string,
 ) => {
   const newFolderId = uuidv4();
   const folderIdMap = new Map<string, string>();
@@ -338,16 +342,19 @@ const processFolderCopy = async (
   });
 
   // Get all descendant items (folders and files) in the correct order
-  const { files: descendantFiles, folders: descendantFolders } = await getAllDescendantItems(userItem.id, userId, isPrivate);
+  const { files: descendantFiles, folders: descendantFolders } =
+    await getAllDescendantItems(userItem.id, userId, isPrivate);
 
   // First, create all folders in the correct hierarchy
   for (const folder of descendantFolders) {
     const newSubFolderId = uuidv4();
     folderIdMap.set(folder.id, newSubFolderId);
-    
+
     // Find the correct parent folder ID
     const originalParentId = folder.parentFolderId;
-    const newParentId = originalParentId ? folderIdMap.get(originalParentId) : newFolderId;
+    const newParentId = originalParentId
+      ? folderIdMap.get(originalParentId)
+      : newFolderId;
 
     dbCreations.push({
       id: newSubFolderId,
@@ -366,7 +373,9 @@ const processFolderCopy = async (
     if (file.path) {
       const newFileId = uuidv4();
       const originalParentId = file.parentFolderId;
-      const newParentId = originalParentId ? folderIdMap.get(originalParentId) : newFolderId;
+      const newParentId = originalParentId
+        ? folderIdMap.get(originalParentId)
+        : newFolderId;
 
       const newPath = generateAdminCopyPath(
         file.path,
@@ -374,7 +383,7 @@ const processFolderCopy = async (
         userId,
         isPrivate,
         adminId,
-        newFileId
+        newFileId,
       );
 
       s3Operations.push({
@@ -417,7 +426,7 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { error: "User ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -425,34 +434,29 @@ export async function POST(request: NextRequest) {
     const targetFolderValid = await validateTargetFolderAdmin(
       targetFolderId,
       userId,
-      isPrivate
+      isPrivate,
     );
     if (!targetFolderValid) {
       return NextResponse.json(
         { error: "Target folder not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // Validate all items belong to the correct user and context
-    const userItems = await validateUserItemsAdmin(
-      items,
-      userId,
-      isPrivate,
-      {
-        id: true,
-        type: true,
-        path: true,
-        parentFolderId: true,
-        name: true,
-        size: true,
-        folderName: true,
-      }
-    );
+    const userItems = await validateUserItemsAdmin(items, userId, isPrivate, {
+      id: true,
+      type: true,
+      path: true,
+      parentFolderId: true,
+      name: true,
+      size: true,
+      folderName: true,
+    });
     if (userItems.length !== items.length) {
       return NextResponse.json(
         { error: "Some items not found or unauthorized" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -465,16 +469,19 @@ export async function POST(request: NextRequest) {
       },
       select: { name: true },
     });
-    const existingNames = new Set(
+    const existingNames = new Set<string>(
       existingFiles
-        .map((f) => f.name)
-        .filter((name): name is string => typeof name === "string" && name.length > 0)
+        .map((f: { name: string | null }) => f.name)
+        .filter(
+          (name: string | null): name is string =>
+            typeof name === "string" && name.length > 0,
+        ),
     );
 
     // Generate unique names for all items being copied
     const uniqueNames = generateUniqueNamesForItems(
-      userItems.map(item => ({ name: item.name || "Unnamed" })),
-      existingNames
+      userItems.map((item: any) => ({ name: item.name || "Unnamed" })),
+      existingNames,
     );
 
     // Collect all S3 operations and DB operations needed
@@ -494,7 +501,7 @@ export async function POST(request: NextRequest) {
           userId,
           isPrivate,
           session.user.id,
-          uniqueName
+          uniqueName,
         );
         s3Operations.push(s3Operation);
         dbCreations.push(dbCreation);
@@ -506,7 +513,7 @@ export async function POST(request: NextRequest) {
           userId,
           isPrivate,
           session.user.id,
-          uniqueName
+          uniqueName,
         );
         s3Operations.push(...folderResult.s3Operations);
         dbCreations.push(...folderResult.dbCreations);
@@ -516,10 +523,7 @@ export async function POST(request: NextRequest) {
     // Check storage limit before proceeding
     const storageCheck = await checkStorageLimit(userId, dbCreations);
     if (!storageCheck.success) {
-      return NextResponse.json(
-        { error: storageCheck.error },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: storageCheck.error }, { status: 403 });
     }
 
     // Execute S3 copies first
@@ -528,20 +532,20 @@ export async function POST(request: NextRequest) {
       if (!s3CopySuccess) {
         return NextResponse.json(
           { error: "Failed to copy files in S3" },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
 
     // Then create new database entries in transaction
     await prisma.$transaction(
-      async (tx) => {
+      async (tx: any) => {
         // First create all folders (they have no parentFolderId dependencies outside this transaction)
         const folderCreations = dbCreations.filter(
-          (item) => item.type === "folder"
+          (item) => item.type === "folder",
         );
         const fileCreations = dbCreations.filter(
-          (item) => item.type !== "folder"
+          (item) => item.type !== "folder",
         );
 
         // Use createMany for better performance, but chunk large operations
@@ -551,7 +555,7 @@ export async function POST(request: NextRequest) {
           for (let i = 0; i < folderCreations.length; i += BATCH_SIZE) {
             const batch = folderCreations.slice(i, i + BATCH_SIZE);
             await tx.file.createMany({
-              data: batch.map((creation) => ({
+              data: batch.map((creation: any) => ({
                 ...creation,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -564,7 +568,7 @@ export async function POST(request: NextRequest) {
           for (let i = 0; i < fileCreations.length; i += BATCH_SIZE) {
             const batch = fileCreations.slice(i, i + BATCH_SIZE);
             await tx.file.createMany({
-              data: batch.map((creation) => ({
+              data: batch.map((creation: any) => ({
                 ...creation,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -572,7 +576,7 @@ export async function POST(request: NextRequest) {
             });
 
             // Update target user's storageUsed (receivedById) for non-folder files
-            const kbSum = batch.reduce((sum, c) => {
+            const kbSum = batch.reduce((sum, c): number => {
               if (c.type === "folder") return sum;
               return sum + parseFileSizeToKB(c.size || "");
             }, 0);
@@ -600,7 +604,7 @@ export async function POST(request: NextRequest) {
       },
       {
         timeout: 30000, // 30 second timeout for large copy operations
-      }
+      },
     );
 
     return NextResponse.json({ success: true, copiedCount: items.length });
@@ -608,7 +612,7 @@ export async function POST(request: NextRequest) {
     console.error("Error in admin bulk copy:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

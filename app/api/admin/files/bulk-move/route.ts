@@ -3,7 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { batchMoveS3Objects } from "@/lib/s3";
-import { getDescendantFiles, isDescendantFolder, generateAdminMovePath } from "@/lib/file-helpers";
+import {
+  getDescendantFiles,
+  isDescendantFolder,
+  generateAdminMovePath,
+} from "@/lib/file-helpers";
 import {
   validateTargetFolderAdmin,
   validateUserItemsAdmin,
@@ -29,13 +33,21 @@ const checkFolderDescendants = async (
   items: BulkMoveItem[],
   targetFolderId: string | null,
   userId: string,
-  isPrivate: boolean
+  isPrivate: boolean,
 ): Promise<boolean> => {
   if (!targetFolderId) return false;
-  const whereExtra = { receivedById: userId, isAdminOnlyPrivateFile: isPrivate, type: "folder" } as const;
+  const whereExtra = {
+    receivedById: userId,
+    isAdminOnlyPrivateFile: isPrivate,
+    type: "folder",
+  } as const;
   for (const item of items) {
     if (item.type === "folder") {
-      const isDescendant = await isDescendantFolder(item.id, targetFolderId, whereExtra);
+      const isDescendant = await isDescendantFolder(
+        item.id,
+        targetFolderId,
+        whereExtra,
+      );
       if (isDescendant) return true;
     }
   }
@@ -49,7 +61,7 @@ const processItems = async (
   userId: string,
   isPrivate: boolean,
   adminId: string,
-  uniqueNames: string[]
+  uniqueNames: string[],
 ) => {
   const s3Operations: { source: string; destination: string }[] = [];
   const dbUpdates: {
@@ -69,7 +81,7 @@ const processItems = async (
         targetFolderId,
         userId,
         isPrivate,
-        adminId
+        adminId,
       );
 
       s3Operations.push({
@@ -98,7 +110,7 @@ const processItems = async (
             targetFolderId,
             userId,
             isPrivate,
-            adminId
+            adminId,
           );
 
           s3Operations.push({
@@ -144,37 +156,36 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { error: "User ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Validate target folder
-    const isValidTarget = await validateTargetFolderAdmin(targetFolderId, userId, isPrivate);
+    const isValidTarget = await validateTargetFolderAdmin(
+      targetFolderId,
+      userId,
+      isPrivate,
+    );
     if (!isValidTarget) {
       return NextResponse.json(
         { error: "Target folder not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // Validate all items belong to the correct user and context
-    const userItems = await validateUserItemsAdmin(
-      items,
-      userId,
-      isPrivate,
-      {
-        id: true,
-        type: true,
-        path: true,
-        parentFolderId: true,
-        name: true,
-      }
-    );
+    const userItems = await validateUserItemsAdmin(items, userId, isPrivate, {
+      id: true,
+      type: true,
+      path: true,
+      parentFolderId: true,
+      name: true,
+    });
 
     if (userItems.length !== items.length) {
       return NextResponse.json(
         { error: "Some items not found or unauthorized" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -183,12 +194,12 @@ export async function POST(request: NextRequest) {
       items,
       targetFolderId,
       userId,
-      isPrivate
+      isPrivate,
     );
     if (hasDescendantConflict) {
       return NextResponse.json(
         { error: "Cannot move folder into its own descendant" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -201,12 +212,16 @@ export async function POST(request: NextRequest) {
       },
       select: { name: true },
     });
-    const existingNames = new Set(existingFiles.map(f => f.name).filter((name): name is string => name !== null));
+    const existingNames = new Set<string>(
+      existingFiles
+        .map((f: { name: string | null }) => f.name)
+        .filter((name: string | null): name is string => name !== null),
+    );
 
     // Generate unique names for all items being moved
     const uniqueNames = generateUniqueNamesForItems(
-      userItems.map(item => ({ name: item.name || "Unnamed" })),
-      existingNames
+      userItems.map((item: any) => ({ name: item.name || "Unnamed" })),
+      existingNames,
     );
 
     // Process items and collect S3 operations and DB updates
@@ -216,7 +231,7 @@ export async function POST(request: NextRequest) {
       userId,
       isPrivate,
       session.user.id,
-      uniqueNames
+      uniqueNames,
     );
 
     // Execute S3 moves first
@@ -225,13 +240,13 @@ export async function POST(request: NextRequest) {
       if (!s3MoveSuccess) {
         return NextResponse.json(
           { error: "Failed to move files in S3" },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
 
     // Then update database in transaction
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       for (const update of dbUpdates) {
         const updateData: any = {
           parentFolderId: update.newParentFolderId,
@@ -272,7 +287,7 @@ export async function POST(request: NextRequest) {
     console.error("Error in admin bulk move:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

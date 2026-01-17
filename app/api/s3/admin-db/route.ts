@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     const fileSizeKB = parseFileSizeToKB(size || "0 KB");
 
-    const file = await prisma.$transaction(async (tx) => {
+    const file = await prisma.$transaction(async (tx: any) => {
       // Create the file record
       const createdFile = await tx.file.create({
         data: {

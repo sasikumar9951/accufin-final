@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       select: { path: true, folderName: true, name: true },
     });
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await tx.file.deleteMany({
         where: {
           uploadedById: session.user.id,

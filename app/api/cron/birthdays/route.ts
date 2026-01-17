@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const birthdayUsers = users.filter((u) => {
+    const birthdayUsers = users.filter((u: any) => {
       if (!u.dateOfBirth) return false;
       const dob = new Date(u.dateOfBirth);
       return dob.getUTCMonth() + 1 === month && dob.getUTCDate() === day;

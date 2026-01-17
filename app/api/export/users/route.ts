@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     // Count files received from admin per user
     const withAdminCounts = await Promise.all(
-      users.map(async (u) => {
+      users.map(async (u: any) => {
         const filesReceivedFromAdmin = await prisma.file.count({
           where: {
             receivedBy: { email: u.email },
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    const rows = withAdminCounts.map((u) => ({
+    const rows = withAdminCounts.map((u: any) => ({
       Name: u.name ?? "",
       Email: u.email,
       Phone: u.contactNumber ?? "",

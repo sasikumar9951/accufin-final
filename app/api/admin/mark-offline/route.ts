@@ -29,7 +29,7 @@ export async function POST() {
     // Mark these users as offline
     const updateResult = await prisma.user.updateMany({
       where: {
-        id: { in: inactiveUsers.map((user) => user.id) },
+        id: { in: inactiveUsers.map((user: any) => user.id) },
       },
       data: {
         isOnline: false,
@@ -41,7 +41,7 @@ export async function POST() {
       data: {
         inactiveUsersCount: inactiveUsers.length,
         updatedCount: updateResult.count,
-        inactiveUsers: inactiveUsers.map((user) => ({
+        inactiveUsers: inactiveUsers.map((user: any) => ({
           id: user.id,
           name: user.name,
           email: user.email,

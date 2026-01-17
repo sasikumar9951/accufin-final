@@ -37,7 +37,7 @@ export async function GET() {
     });
 
     // const usersWithCounts = await Promise.all(
-    //   users.map(async (user) => {
+    //   users.map(async (user: any) => {
     //     // Get all files uploaded by this user
     //     const userFiles = await prisma.file.findMany({
     //       where: {

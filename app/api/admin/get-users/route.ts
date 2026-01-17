@@ -66,7 +66,7 @@ function buildFileCountMap(fileCounts: FileCountData[]): Map<string, FileCounts>
 
 async function addSignedUrlsToUsers(users: any[]): Promise<any[]> {
   return Promise.all(
-    users.map(async (user) => {
+    users.map(async (user: any) => {
       if (user.profileUrl) {
         try {
           // Check if it's a Google profile image URL
@@ -102,7 +102,7 @@ async function addSignedUrlsToUsers(users: any[]): Promise<any[]> {
 }
 
 function transformUserData(users: any[], fileCountMap: Map<string, FileCounts>): any[] {
-  return users.map((user) => {
+  return users.map((user: any) => {
     const fileCounts = fileCountMap.get(user.id) || initializeFileCounts();
 
     return {

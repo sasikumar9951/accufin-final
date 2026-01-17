@@ -74,7 +74,7 @@ async function verifyAndUseBackupCode(userId: string, backupCode: string) {
     },
   });
 
-  let validBackupCode = null;
+  let validBackupCode: any = null;
   for (const code of backupCodes) {
     const isValid = await verifyBackupCode(cleanCode, code.hashedCode);
     if (isValid) {

@@ -17,7 +17,7 @@ export async function GET() {
       },
     });
     const signedFiles = await Promise.all(
-      files.map(async (file) => {
+      files.map(async (file: any) => {
         if (file.type !== "folder" && file.path) {
           const signedUrl = await getSignedUrlFromPath(file.path);
           return {
