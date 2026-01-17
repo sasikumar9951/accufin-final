@@ -1,14 +1,16 @@
 import { PrismaClient } from "./generated/prisma";
 
 const prismaClientSingleton = () => {
-  const client = new PrismaClient({
+  return new PrismaClient({
     log:
       process.env.NODE_ENV === "development"
         ? ["query", "error", "warn"]
         : ["error"],
+    // Connection pooling settings for production
+    ...(process.env.NODE_ENV === "production" && {
+      errorFormat: "pretty",
+    }),
   });
-  console.warn("PRISMA CLIENT INSTANTIATED");
-  return client;
 };
 
 declare global {
@@ -19,6 +21,9 @@ const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
 
 // Properly preserve singleton in production
 if (process.env.NODE_ENV !== "production") {
+  globalThis.prismaGlobal = prisma;
+} else {
+  // Ensure singleton is used in production
   globalThis.prismaGlobal = prisma;
 }
 
