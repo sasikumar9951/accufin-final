@@ -6,7 +6,7 @@ import {
   FaChevronRight,
 } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import { Link, OpenContact } from "@/lib/generated/prisma";
+import { Link, OpenContact } from "@prisma/client";
 
 const quickLinks = [
   { text: "Home", href: "/" },

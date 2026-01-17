@@ -30,7 +30,7 @@ import {
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
-import { User as PrismaUser } from "@/lib/generated/prisma";
+import { User as PrismaUser } from "@prisma/client";
 import CreateUserForm from "./CreateUserForm";
 import { useSession } from "next-auth/react";
 import { apiFetch } from "@/lib/client-api";

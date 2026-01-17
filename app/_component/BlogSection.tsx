@@ -2,7 +2,7 @@
 import { FaCalendarAlt, FaChevronRight } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
-import { Blogs } from "@/lib/generated/prisma";
+import { Blogs } from "@prisma/client";
 import { formatTextWithLinks } from "@/lib/utils";
 
 export default function BlogSection() {

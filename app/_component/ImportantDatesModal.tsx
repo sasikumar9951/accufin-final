@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { FaTimes, FaCalendarAlt } from "react-icons/fa";
-import { ImportantDate } from "@/lib/generated/prisma";
+import { ImportantDate } from "@prisma/client";
 
 interface ImportantDatesModalProps {
   readonly isOpen: boolean;

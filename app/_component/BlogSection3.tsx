@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { FaCalendarAlt, FaChevronRight } from "react-icons/fa";
-import { Blogs } from "@/lib/generated/prisma";
+import { Blogs } from "@prisma/client";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";

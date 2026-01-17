@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { FaArrowRight, FaCheck, FaChevronRight, FaRegCalendarAlt, FaRegUser } from "react-icons/fa";
-import { Blogs } from "@/lib/generated/prisma";
+import { Blogs } from "@prisma/client";
 import { formatTextWithLinks } from "@/lib/utils";
 
 
