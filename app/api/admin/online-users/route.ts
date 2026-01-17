@@ -44,10 +44,10 @@ export async function GET() {
 
     // Separate online and offline users
     const onlineUsers = usersWithActivityInfo.filter(
-      (user) => user.isOnline && user.isRecentlyActive
+      (user: any) => user.isOnline && user.isRecentlyActive
     );
     const offlineUsers = usersWithActivityInfo.filter(
-      (user) => !user.isOnline || !user.isRecentlyActive
+      (user: any) => !user.isOnline || !user.isRecentlyActive
     );
 
     return NextResponse.json({
