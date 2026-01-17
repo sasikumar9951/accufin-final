@@ -34,7 +34,7 @@ export async function DELETE(
       },
       select: { path: true },
     });
-    const filePaths = userFiles.map((f) => f.path).filter(Boolean) as string[];
+    const filePaths = userFiles.map((f: any) => f.path).filter(Boolean) as string[];
 
     // Collect form response ids to delete answers first
     const formResponses = await prisma.formResponse.findMany({
