@@ -203,6 +203,7 @@ export const authOptions: AuthOptions = {
           },
         });
 
+        // Updated part for sending email in background
         if (!dbUser) {
           dbUser = await prisma.user.create({
             data: {
@@ -214,7 +215,7 @@ export const authOptions: AuthOptions = {
               profileUrl:
                 user.image && user.image.startsWith("https://")
                   ? user.image
-                  : null, // Validate Google profile image URL
+                  : null,
             },
             select: {
               id: true,
@@ -225,23 +226,22 @@ export const authOptions: AuthOptions = {
               profileUrl: true,
             },
           });
-          try {
-            const loginTime = new Date().toLocaleString();
-            await sendLoginConfirmationEmail({
-              userName: user.name || "User",
-              userEmail: user.email,
-              loginTime,
-              loginMethod: "Google OAuth",
-            });
-          } catch (emailError) {
+
+          // Background-la email trigger pannidalaam, login-ah block pannaadhu
+          const loginTime = new Date().toLocaleString();
+          sendLoginConfirmationEmail({
+            userName: user.name || "User",
+            userEmail: user.email,
+            loginTime,
+            loginMethod: "Google OAuth",
+          }).catch((emailError) => {
             console.error(
-              "Error sending login confirmation email:",
+              "Error sending login confirmation email in background:",
               emailError,
             );
-            // Don't fail login if email fails
-          }
+          });
         } else {
-          // For existing Google users, update their profile image if it's not set and we have one from Google
+          // Existing Google users-ku profile image update panradhu (Idhu fast-ah nadakkum)
           if (
             !dbUser.profileUrl &&
             user.image &&

@@ -13,8 +13,9 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const isOnline = body.isOnline !== false; // Default to true unless explicitly false
 
+    // Replace the update logic in route.ts
     await prisma.user.update({
-      where: { id: body.userId },
+      where: { id: session.user.id }, // Use verified session ID
       data: {
         isOnline: isOnline,
         lastActivityAt: now,
