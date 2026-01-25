@@ -55,6 +55,28 @@ const markdownComponents = {
   img: ({ src, alt }: any) => (
     <img src={src} alt={alt} className="max-w-full h-auto rounded mt-2" />
   ),
+  table: ({ children }: any) => (
+    <table className="w-full border-collapse border border-white/30 mt-2 mb-4">
+      {children}
+    </table>
+  ),
+  thead: ({ children }: any) => (
+    <thead className="bg-white/10">{children}</thead>
+  ),
+  tbody: ({ children }: any) => <tbody>{children}</tbody>,
+  tr: ({ children }: any) => (
+    <tr className="border border-white/30">{children}</tr>
+  ),
+  th: ({ children }: any) => (
+    <th className="border border-white/30 px-3 py-2 text-white font-bold text-left">
+      {children}
+    </th>
+  ),
+  td: ({ children }: any) => (
+    <td className="border border-white/30 px-3 py-2 text-white">
+      {children}
+    </td>
+  ),
 };
 
 export default function BlogSection() {

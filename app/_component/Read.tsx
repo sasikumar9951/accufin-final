@@ -58,13 +58,22 @@ const markdownComponents: Components = {
       </table>
     </div>
   ),
+  thead: ({children}) => (
+    <thead className="bg-gray-100">{children}</thead>
+  ),
+  tbody: ({children}) => (
+    <tbody>{children}</tbody>
+  ),
+  tr: ({children}) => (
+    <tr className="border border-gray-300">{children}</tr>
+  ),
   th: ({children}) => (
-    <th className="border border-gray-300 px-4 py-2 bg-gray-100 font-semibold text-left">
+    <th className="border border-gray-300 px-4 py-2 bg-gray-100 font-bold text-left text-gray-900">
       {children}
     </th>
   ),
   td: ({children}) => (
-    <td className="border border-gray-300 px-4 py-2">
+    <td className="border border-gray-300 px-4 py-2 text-gray-800">
       {children}
     </td>
   ),

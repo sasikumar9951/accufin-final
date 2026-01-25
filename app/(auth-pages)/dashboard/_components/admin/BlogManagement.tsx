@@ -77,6 +77,32 @@ const markdownComponents: Components = {
       {children}
     </code>
   ),
+  table: ({ children }: any) => (
+    <div className="overflow-x-auto mb-4">
+      <table className="min-w-full border-collapse border border-gray-300">
+        {children}
+      </table>
+    </div>
+  ),
+  thead: ({ children }: any) => (
+    <thead className="bg-gray-100">{children}</thead>
+  ),
+  tbody: ({ children }: any) => (
+    <tbody>{children}</tbody>
+  ),
+  tr: ({ children }: any) => (
+    <tr className="border border-gray-300">{children}</tr>
+  ),
+  th: ({ children }: any) => (
+    <th className="border border-gray-300 px-4 py-2 bg-gray-100 font-bold text-left text-gray-900">
+      {children}
+    </th>
+  ),
+  td: ({ children }: any) => (
+    <td className="border border-gray-300 px-4 py-2 text-gray-800">
+      {children}
+    </td>
+  ),
 };
 
 // Dynamically import SimpleMDE to avoid SSR issues

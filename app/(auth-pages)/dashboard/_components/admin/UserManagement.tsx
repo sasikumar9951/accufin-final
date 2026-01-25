@@ -717,6 +717,7 @@ export default function UserManagement(_props: UserManagementProps) {
   const [restorableError, setRestorableError] = useState<string | null>(null);
   const [restoringUserId, setRestoringUserId] = useState<string | null>(null);
   const [restorableCurrentPage, setRestorableCurrentPage] = useState(1);
+  const [purgeLoading, setPurgeLoading] = useState(false);
   const restorableItemsPerPage = 10;
 
   // New confirmation states
@@ -798,6 +799,33 @@ export default function UserManagement(_props: UserManagementProps) {
   useEffect(() => {
     fetchRestorableUsers();
   }, []);
+
+  const handlePurgeExpiredUsers = async () => {
+    if (!window.confirm('Permanently delete all expired users? This action cannot be undone.')) {
+      return;
+    }
+    setPurgeLoading(true);
+    try {
+      const res = await fetch('/api/cron/purge-soft-deleted', {
+        method: 'POST',
+        headers: { 'x-admin-secret': process.env.NEXT_PUBLIC_ADMIN_SECRET || 'admin' },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to purge expired users');
+      
+      if (data.count > 0) {
+        toast.success(`Permanently deleted ${data.count} expired user(s)`);
+        fetchRestorableUsers();
+      } else {
+        toast.info('No expired users to delete');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to purge expired users');
+      console.error('Purge error:', err);
+    } finally {
+      setPurgeLoading(false);
+    }
+  };
 
   const formatUsedStorage = (kb: number | null | undefined) => {
     return formatStorageValue(kb, false);
@@ -1577,7 +1605,7 @@ export default function UserManagement(_props: UserManagementProps) {
               <Button
                 variant="outline"
                 onClick={fetchRestorableUsers}
-                disabled={restorableLoading}
+                disabled={restorableLoading || purgeLoading}
                 className="p-0 sm:px-3 sm:py-2 bg-white border-amber-300 hover:bg-amber-100 text-amber-700 min-w-0 h-9 w-9 sm:h-auto sm:w-auto justify-center rounded-md"
                 title="Refresh restorable users"
               >
@@ -1585,6 +1613,18 @@ export default function UserManagement(_props: UserManagementProps) {
                   className={`w-4 h-4 sm:mr-2 ${restorableLoading ? "animate-spin" : ""}`}
                 />
                 <span className="hidden sm:inline">Refresh</span>
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handlePurgeExpiredUsers}
+                disabled={restorableLoading || purgeLoading}
+                className="p-0 sm:px-3 sm:py-2 bg-red-600 hover:bg-red-700 text-white min-w-0 h-9 w-9 sm:h-auto sm:w-auto justify-center rounded-md"
+                title="Permanently delete all expired users now"
+              >
+                <Trash2
+                  className={`w-4 h-4 sm:mr-2 ${purgeLoading ? "animate-pulse" : ""}`}
+                />
+                <span className="hidden sm:inline">Purge Expired</span>
               </Button>
             </div>
           </div>
