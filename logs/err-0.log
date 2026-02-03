@@ -1,0 +1,36 @@
+Failed to fetch testimonials Error [PrismaClientInitializationError]: 
+Invalid `prisma.testimonial.findMany()` invocation:
+
+
+Can't reach database server at `ep-polished-surf-ahsx9081-pooler.c-3.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-polished-surf-ahsx9081-pooler.c-3.us-east-1.aws.neon.tech:5432`.
+    at async l (.next/server/app/api/user/testimonials/route.js:1:332) {
+  clientVersion: '6.9.0',
+  errorCode: undefined,
+  retryable: undefined
+}
+Error fetching blogs: Error [PrismaClientInitializationError]: 
+Invalid `prisma.blogs.findMany()` invocation:
+
+
+Can't reach database server at `ep-polished-surf-ahsx9081-pooler.c-3.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-polished-surf-ahsx9081-pooler.c-3.us-east-1.aws.neon.tech:5432`.
+    at async p (.next/server/app/api/user/blogs/route.js:1:635) {
+  clientVersion: '6.9.0',
+  errorCode: undefined,
+  retryable: undefined
+}
+Error fetching open contacts: Error [PrismaClientInitializationError]: 
+Invalid `prisma.openContact.findMany()` invocation:
+
+
+Can't reach database server at `ep-polished-surf-ahsx9081-pooler.c-3.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-polished-surf-ahsx9081-pooler.c-3.us-east-1.aws.neon.tech:5432`.
+    at async c (.next/server/app/api/user/open-contacts/route.js:1:846) {
+  clientVersion: '6.9.0',
+  errorCode: undefined,
+  retryable: undefined
+}
