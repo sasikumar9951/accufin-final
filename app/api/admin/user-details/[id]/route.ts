@@ -65,7 +65,7 @@ export async function GET(
           {
             name: {
               // Try to find files by name pattern if user has files with same names
-              in: combinedUploadedFiles.map(f => f.name).filter(n => n)
+              in: combinedUploadedFiles.map(f => f.name).filter(Boolean)
             }
           }
         ]

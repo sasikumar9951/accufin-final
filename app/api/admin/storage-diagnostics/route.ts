@@ -24,6 +24,73 @@ function parseSizeToKB(size: string | null | undefined): number {
   }
 }
 
+async function findMismatches() {
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      storageUsed: true,
+      maxStorageLimit: true,
+      _count: {
+        select: {
+          uploadedFiles: true,
+          receivedFiles: true,
+        },
+      },
+    },
+  });
+
+  const mismatches = [];
+
+  for (const user of users) {
+    const userFiles = await prisma.file.findMany({
+      where: {
+        OR: [
+          { uploadedById: user.id },
+          { receivedById: user.id },
+        ],
+      },
+      select: {
+        id: true,
+        size: true,
+      },
+    });
+
+    const actualStorageKB = userFiles.reduce(
+      (sum, f) => sum + parseSizeToKB(f.size),
+      0
+    );
+    const roundedActual = Math.round(actualStorageKB);
+    const reportedStorage = user.storageUsed || 0;
+
+    if (Math.abs(roundedActual - reportedStorage) > 100) {
+      mismatches.push({
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        reportedStorageKB: reportedStorage,
+        actualStorageKB: roundedActual,
+        fileCount: userFiles.length,
+        difference: roundedActual - reportedStorage,
+        status:
+          roundedActual === 0 && reportedStorage > 0
+            ? "CRITICAL: Files missing"
+            : "MISMATCH",
+      });
+    }
+  }
+
+  mismatches.sort((a, b) => {
+    const aIsCritical = a.status === "CRITICAL: Files missing" ? 1 : 0;
+    const bIsCritical = b.status === "CRITICAL: Files missing" ? 1 : 0;
+    if (aIsCritical !== bIsCritical) return bIsCritical - aIsCritical;
+    return Math.abs(b.difference) - Math.abs(a.difference);
+  });
+
+  return { totalUsers: users.length, mismatchCount: mismatches.length, mismatches: mismatches.slice(0, 50) };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await requireAdminSession();
@@ -32,79 +99,8 @@ export async function POST(request: NextRequest) {
     const { action } = await request.json();
 
     if (action === "find-mismatches") {
-      // Find all users with storage mismatches
-      const users = await prisma.user.findMany({
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          storageUsed: true,
-          maxStorageLimit: true,
-          _count: {
-            select: {
-              uploadedFiles: true,
-              receivedFiles: true,
-            },
-          },
-        },
-      });
-
-      const mismatches = [];
-
-      for (const user of users) {
-        // Find actual files for this user
-        const userFiles = await prisma.file.findMany({
-          where: {
-            OR: [
-              { uploadedById: user.id },
-              { receivedById: user.id },
-            ],
-          },
-          select: {
-            id: true,
-            size: true,
-          },
-        });
-
-        const actualStorageKB = userFiles.reduce(
-          (sum, f) => sum + parseSizeToKB(f.size),
-          0
-        );
-        const roundedActual = Math.round(actualStorageKB);
-        const reportedStorage = user.storageUsed || 0;
-
-        // Flag if there's a mismatch
-        if (Math.abs(roundedActual - reportedStorage) > 100) {
-          // More than 100KB difference
-          mismatches.push({
-            userId: user.id,
-            email: user.email,
-            name: user.name,
-            reportedStorageKB: reportedStorage,
-            actualStorageKB: roundedActual,
-            fileCount: userFiles.length,
-            difference: roundedActual - reportedStorage,
-            status:
-              roundedActual === 0 && reportedStorage > 0
-                ? "CRITICAL: Files missing"
-                : "MISMATCH",
-          });
-        }
-      }
-
-      // Sort by severity (missing files first, then largest mismatches)
-      mismatches.sort((a, b) => {
-        const aIsCritical = a.status === "CRITICAL: Files missing" ? 1 : 0;
-        const bIsCritical = b.status === "CRITICAL: Files missing" ? 1 : 0;
-        if (aIsCritical !== bIsCritical) return bIsCritical - aIsCritical;
-        return Math.abs(b.difference) - Math.abs(a.difference);
-      });
-
-      return NextResponse.json({
-        totalUsers: users.length,
-        mismatchCount: mismatches.length,
-        mismatches: mismatches.slice(0, 50), // Return top 50
-      });
+      const result = await findMismatches();
+      return NextResponse.json(result);
     }
 
     if (action === "find-orphaned-files") {
