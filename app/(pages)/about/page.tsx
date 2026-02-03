@@ -7,7 +7,6 @@ import Footer from "@/app/_component/Footer";
 import { motion, useInView } from "framer-motion";
 import { useState, useRef } from "react";
 import { FaPlay } from "react-icons/fa";
-
 const YOUTUBE_URL = "https://www.youtube.com/embed/VhBl3dHT5SY?autoplay=1";
 
 
