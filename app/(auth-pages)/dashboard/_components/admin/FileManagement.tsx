@@ -140,13 +140,29 @@ const processFiles = (
 ) => {
   const folders: Folder[] = [];
   const files: FileDetail[] = [];
-  if (!allFiles) {
+  
+  if (!allFiles || !Array.isArray(allFiles)) {
+    console.warn("processFiles called with invalid allFiles:", allFiles);
     return { files: [], folders: [] };
   }
 
   // Get files and folders in current directory
+  // Handle both null and undefined for parentFolderId to ensure proper matching
+  const normalizeParentId = (id: string | null | undefined): string | null => {
+    return id ?? null;
+  };
+
   for (const file of allFiles) {
-    if (file.parentFolderId === currentFolderId) {
+    // Skip files without ID (shouldn't happen but be defensive)
+    if (!file || !file.id) {
+      console.warn("Skipping file without ID:", file);
+      continue;
+    }
+
+    const normalizedParentId = normalizeParentId(file.parentFolderId);
+    const normalizedCurrentId = normalizeParentId(currentFolderId);
+    
+    if (normalizedParentId === normalizedCurrentId) {
       if (file.type === "folder") {
         folders.push({ id: file.id, name: file.name || "Unnamed Folder" });
       } else {
@@ -164,6 +180,16 @@ const processFiles = (
     folderName: file.folderName,
     parentFolderId: file.parentFolderId,
   }));
+  
+  console.log("processFiles result:", {
+    currentFolderId,
+    totalInputFiles: allFiles.length,
+    processedFolders: folders.length,
+    processedFiles: managedFiles.length,
+    folders,
+    files: managedFiles.slice(0, 3) // Log first 3 files only
+  });
+  
   return { files: managedFiles, folders };
 };
 
@@ -345,8 +371,20 @@ export default function FileManagement() {
       const res = await apiFetch(`/api/admin/user-details/${userId}`, { logoutOn401: false });
       if (!res.ok) throw new Error("Failed to fetch user details");
       const data = await res.json();
+      
+      // Debug logging to help identify issues
+      console.log("User file data received:", {
+        userId,
+        uploadedFilesCount: data.userUploadedFiles?.length || 0,
+        receivedFilesCount: data.userReceivedFiles?.length || 0,
+        privateFilesCount: data.userPrivateFiles?.length || 0,
+        archivedFilesCount: data.userArchivedFiles?.length || 0,
+        data
+      });
+      
       setUserDetails(data);
     } catch (err) {
+      console.error("Error fetching user file data:", err);
       setUserDetailsError(
         typeof err === "string" ? err : "Failed to load user details"
       );
@@ -644,10 +682,15 @@ export default function FileManagement() {
       // Prevent duplicate folder names by appending a random number if needed
       const list =
         type === "private" ? privateFilesData || [] : responseFilesData || [];
+      
+      // Normalize parent folder IDs for comparison
+      const normalizeId = (id: string | null | undefined): string | null => id ?? null;
+      const normalizedParentId = normalizeId(parentFolderId);
+      
       const siblingNames = new Set(
         list
           .filter(
-            (f) => f.parentFolderId === parentFolderId && f.type === "folder"
+            (f) => normalizeId(f.parentFolderId) === normalizedParentId && f.type === "folder"
           )
           .map((f) => (f.name || "").toLowerCase())
       );
@@ -1062,9 +1105,11 @@ export default function FileManagement() {
 
   const handlePrivateDeleteFolder = async (folderId: string) => {
     const prev = privateFilesData;
+    const normalizeId = (id: string | null | undefined): string | null => id ?? null;
     const getAllDescendants = (parentId: string): string[] => {
+      const normalizedParentId = normalizeId(parentId);
       const children = (privateFilesData || []).filter(
-        (f) => f.parentFolderId === parentId
+        (f) => normalizeId(f.parentFolderId) === normalizedParentId
       );
       let allIds: string[] = [parentId];
       for (const child of children) {
@@ -1102,9 +1147,11 @@ export default function FileManagement() {
 
   const handleResponseDeleteFolder = async (folderId: string) => {
     const prev = responseFilesData;
+    const normalizeId = (id: string | null | undefined): string | null => id ?? null;
     const getAllDescendants = (parentId: string): string[] => {
+      const normalizedParentId = normalizeId(parentId);
       const children = (responseFilesData || []).filter(
-        (f) => f.parentFolderId === parentId
+        (f) => normalizeId(f.parentFolderId) === normalizedParentId
       );
       let allIds: string[] = [parentId];
       for (const child of children) {
@@ -1400,9 +1447,14 @@ export default function FileManagement() {
       // Prevent duplicate folder names by appending a random number if needed
       const list =
         type === "private" ? privateFilesData || [] : responseFilesData || [];
+      
+      // Normalize parent folder IDs for comparison
+      const normalizeId = (id: string | null | undefined): string | null => id ?? null;
+      const normalizedParentId = normalizeId(parentId);
+      
       const siblingNames = new Set(
         list
-          .filter((f) => f.parentFolderId === parentId && f.type === "folder")
+          .filter((f) => normalizeId(f.parentFolderId) === normalizedParentId && f.type === "folder")
           .map((f) => (f.name || "").toLowerCase())
       );
       let finalName = name.trim();
@@ -1481,6 +1533,156 @@ export default function FileManagement() {
     }
   };
 
+  // Handler to run storage diagnostics
+  const handleStorageDiagnostics = async () => {
+    try {
+      setLoading(true);
+      
+      const res = await apiFetch(`/api/admin/storage-diagnostics`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "find-mismatches" }),
+        logoutOn401: false,
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to run diagnostics");
+      }
+
+      const data = await res.json();
+      
+      if (data.mismatchCount === 0) {
+        toast.success("✓ All users' storage is correct!");
+        return;
+      }
+
+      const criticalCount = data.mismatches.filter(
+        (m: any) => m.status === "CRITICAL: Files missing"
+      ).length;
+
+      toast.error(
+        `Found ${data.mismatchCount} storage mismatches (${criticalCount} critical). Check console for details.`
+      );
+      
+      console.table(data.mismatches);
+      console.log("Full diagnostics data:", data);
+    } catch (error) {
+      console.error("Error running diagnostics:", error);
+      toast.error("Failed to run storage diagnostics");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handler to fix all storage issues
+  const handleFixAllStorage = async () => {
+    const confirmed = window.confirm(
+      "This will recalculate storage for ALL users. Continue?"
+    );
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+      
+      const res = await apiFetch(`/api/admin/storage-diagnostics`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "fix-all-storage" }),
+        logoutOn401: false,
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fix storage");
+      }
+
+      const data = await res.json();
+      
+      toast.success(`Fixed storage for ${data.updatedCount} users`);
+      
+      // Refresh users list
+      await fetchUsers();
+    } catch (error) {
+      console.error("Error fixing storage:", error);
+      toast.error("Failed to fix storage");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRecalculateStorage = async () => {
+    if (!selectedUser) {
+      toast.error("Please select a user first");
+      return;
+    }
+
+    const selectedUserData = users.find((u) => u.id === selectedUser);
+    const currentStorage = selectedUserData?.storageUsed || 0;
+
+    try {
+      setUserDetailsLoading(true);
+      
+      // First, directly query to find actual files for this user
+      const res = await apiFetch(`/api/admin/user-details/${selectedUser}`, {
+        logoutOn401: false,
+      });
+      
+      if (!res.ok) {
+        throw new Error("Failed to fetch current user files");
+      }
+      
+      const userData = await res.json();
+      const actualFileCount = 
+        (userData.userUploadedFiles?.length || 0) + 
+        (userData.userReceivedFiles?.length || 0) +
+        (userData.userPrivateFiles?.length || 0);
+      
+      console.log("Recalculate storage check:", {
+        currentStorage,
+        actualFileCount,
+        uploadedCount: userData.userUploadedFiles?.length || 0,
+        receivedCount: userData.userReceivedFiles?.length || 0,
+        privateCount: userData.userPrivateFiles?.length || 0
+      });
+      
+      // If storage is used but no files exist, warn user
+      if (currentStorage > 0 && actualFileCount === 0) {
+        toast.info(`Warning: User shows ${currentStorage} KB used but has 0 files. Recalculating will reset storage to 0.`);
+      }
+      
+      // Call recompute-storage endpoint
+      const recalcRes = await apiFetch(`/api/admin/recompute-storage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIds: [selectedUser] }),
+        logoutOn401: false,
+      });
+
+      if (!recalcRes.ok) {
+        throw new Error("Failed to recalculate storage");
+      }
+
+      const data = await recalcRes.json();
+      console.log("Storage recalculation result:", data);
+      
+      const newStorage = data.results?.[0]?.totalKB || 0;
+      toast.success(`Storage recalculated: ${currentStorage} KB → ${newStorage} KB (${data.results?.[0]?.fileCount || 0} files)`);
+      
+      // Refresh users list to show updated storage
+      await fetchUsers();
+      
+      // Refresh user file details
+      if (selectedUser) {
+        await fetchUserFileData(selectedUser);
+      }
+    } catch (error) {
+      console.error("Error recalculating storage:", error);
+      const message = error instanceof Error ? error.message : "Failed to recalculate storage";
+      toast.error(message);
+    } finally {
+      setUserDetailsLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -1547,9 +1749,29 @@ export default function FileManagement() {
                   <ChevronUp className="h-4 w-4" />
                 )}
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleStorageDiagnostics}
+                disabled={loading}
+                title="Check storage consistency"
+                className="text-xs"
+              >
+                <RefreshCw className="w-3 h-3 mr-1" />
+                Diagnose
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleFixAllStorage}
+                disabled={loading}
+                title="Fix all storage issues"
+                className="text-xs bg-amber-50 hover:bg-amber-100"
+              >
+                Fix Storage
+              </Button>
             </div>
-          </div>
-          {isUsersCollapsed && selectedUser && (
+            {isUsersCollapsed && selectedUser && (
             <div className="mt-2 flex items-center space-x-2 text-sm text-gray-600">
               <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                 <Users className="w-3 h-3 text-blue-600" />
@@ -1783,20 +2005,33 @@ export default function FileManagement() {
                         </CardDescription>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setIsFilesFromUserCollapsed(!isFilesFromUserCollapsed)
-                      }
-                      className="h-8 w-8 p-0"
-                    >
-                      {isFilesFromUserCollapsed ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronUp className="h-4 w-4" />
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRecalculateStorage}
+                        disabled={userDetailsLoading || !selectedUser}
+                        title="Recalculate user storage"
+                        className="text-xs"
+                      >
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                        Recalc Storage
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setIsFilesFromUserCollapsed(!isFilesFromUserCollapsed)
+                        }
+                        className="h-8 w-8 p-0"
+                      >
+                        {isFilesFromUserCollapsed ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronUp className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   {isFilesFromUserCollapsed && (
                     <div className="mt-2 flex items-center space-x-2 text-sm text-gray-600">
