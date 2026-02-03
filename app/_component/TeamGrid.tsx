@@ -4,8 +4,8 @@ import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from "react-icons/f
 import { team } from "./team.data";
 
 type TeamGridProps = {
-  containerClass?: string;
-  imgHeight?: string;
+  readonly containerClass?: string;
+  readonly imgHeight?: string;
 };
 
 export default function TeamGrid({ containerClass = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8", imgHeight = "h-[340px]" }: TeamGridProps) {
@@ -26,7 +26,7 @@ export default function TeamGrid({ containerClass = "grid grid-cols-1 sm:grid-co
                 <div className="flex space-x-4 mb-6">
                   {[FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn].map((Icon, i) => (
                     <button
-                      key={i}
+                      key={(Icon as any).name ?? i}
                       type="button"
                       className="bg-[#00c6fb] rounded-full p-3 flex items-center justify-center transition-transform duration-300 hover:animate-bounceY cursor-pointer"
                       style={{ transitionDelay: `${i * 50}ms` }}
@@ -47,7 +47,7 @@ export default function TeamGrid({ containerClass = "grid grid-cols-1 sm:grid-co
         ))}
       </div>
 
-      <style>{`
+      <style>{String.raw`
         @keyframes bounceY {
           0% { transform: translateY(0);}
           20% { transform: translateY(-10px);}
@@ -56,7 +56,7 @@ export default function TeamGrid({ containerClass = "grid grid-cols-1 sm:grid-co
           80% { transform: translateY(2px);}
           100% { transform: translateY(0);}
         }
-        .hover\\:animate-bounceY:hover {
+        .hover\:animate-bounceY:hover {
           animation: bounceY 0.6s;
         }
       `}</style>

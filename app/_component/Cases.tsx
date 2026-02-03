@@ -4,8 +4,8 @@ import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 
 type CasesProps = {
-  title?: string;
-  breadcrumb?: string;
+  readonly title?: string;
+  readonly breadcrumb?: string;
 };
 
 export default function Cases({ title = "Case Studies", breadcrumb = "Cases" }: CasesProps) {

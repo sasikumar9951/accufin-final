@@ -5,7 +5,7 @@ import TeamGrid from "./TeamGrid";
 
 export default function Ourteam() {
     const ref = useRef(null);
-    const isInView = useInView(ref, { once: true, margin: "-100px" });
+    useInView(ref, { once: true, margin: "-100px" });
 
     return (
         <section ref={ref} className="bg-[#f7f9fa] py-16 px-4">
