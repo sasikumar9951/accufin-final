@@ -3,7 +3,12 @@ import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 
-export default function Cases() {
+type CasesProps = {
+  title?: string;
+  breadcrumb?: string;
+};
+
+export default function Cases({ title = "Case Studies", breadcrumb = "Cases" }: CasesProps) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.3 });
 
@@ -25,11 +30,11 @@ export default function Cases() {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="relative z-10 w-full max-w-7xl mx-auto px-4 flex flex-col"
       >
-        <h1 className="text-white text-5xl font-bold mb-4 mt-10">Case Studies</h1>
+        <h1 className="text-white text-5xl font-bold mb-4 mt-10">{title}</h1>
         <div className="flex items-center space-x-2 text-lg">
           <Link href="/" className="text-[#00c6fb] hover:underline">Home</Link>
           <span className="text-white">/</span>
-          <span className="text-white">Cases</span>
+          <span className="text-white">{breadcrumb}</span>
         </div>
       </motion.div>
     </section>
