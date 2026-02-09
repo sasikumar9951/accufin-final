@@ -13,35 +13,5 @@ services:
     env_file:
       - .env
 
-    depends_on:
-      - pgbouncer
-
     mem_limit: 2g
     cpus: 1
-
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/auth/session"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-
-
-  pgbouncer:
-    image: edoburu/pgbouncer
-    container_name: pgbouncer
-    restart: always
-
-    ports:
-      - "6432:6432"
-
-    environment:
-      DB_HOST: database-1.c7kuqs88yxgy.ap-south-1.rds.amazonaws.com
-      DB_USER: postgres
-      DB_PASSWORD: yXVFpgnI30pyMisoVaBj
-      DB_NAME: postgres
-
-      POOL_MODE: transaction
-      MAX_CLIENT_CONN: 200
-      DEFAULT_POOL_SIZE: 10
-      RESERVE_POOL_SIZE: 5
-      SERVER_IDLE_TIMEOUT: 30
